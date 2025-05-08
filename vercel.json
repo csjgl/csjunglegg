@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/auth/steam", "destination": "/api/index" },
+    { "source": "/auth/steam/return", "destination": "/api/index" }
+  ]
+}
