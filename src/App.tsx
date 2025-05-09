@@ -93,11 +93,10 @@ const AppContent = ({ showLoginModal, setShowLoginModal }: { showLoginModal: boo
   return (
     <div className="relative min-h-screen bg-gray-100">
       {/* Balance Bar */}
-      {user && user.balance &&(
-        <div className="absolute left-1/2 transform -translate-x-1/2 top-4 z-51 bg-white shadow px-6 py-2 rounded-full border border-gray-200 text-xl font-bold text-green-700 flex items-center space-x-2">
-          <img src="/assets/coin.svg" alt="Coin" className="h-6 w-6" />
-          <span>Balance: {Number(user.balance).toFixed(2)}</span>
-        </div>
+      {user && user.balance && (
+        <span className="text-xl font-bold text-gray-800 flex items-center space-x-2">
+          Balance: {Number(user.balance).toFixed(2)}
+        </span>
       )}
       {/* Navbar */}
       <header className="bg-white shadow-md sticky top-0 z-50 w-full">
