@@ -88,6 +88,8 @@ const AppContent = ({ showLoginModal, setShowLoginModal }: { showLoginModal: boo
   const avatar = user && user._json && user._json.avatarmedium ? user._json.avatarmedium : '/vite.svg';
   const name = user && user._json && user._json.personaname ? user._json.personaname : 'Guest';
 
+  console.log('User object:', user); // Debug: Log user object to verify balance
+
   return (
     <div className="relative min-h-screen bg-gray-100">
       {/* Balance Bar */}
