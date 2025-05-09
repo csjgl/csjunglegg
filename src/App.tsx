@@ -75,6 +75,7 @@ const App = () => {
 const AppContent = ({ showLoginModal, setShowLoginModal }: { showLoginModal: boolean; setShowLoginModal: (show: boolean) => void }) => {
   const user = useUser();
   const loading = useUserLoading();
+  const [showMenu, setShowMenu] = useState(false);
 
   if (loading) {
     return (
@@ -102,24 +103,39 @@ const AppContent = ({ showLoginModal, setShowLoginModal }: { showLoginModal: boo
           </div>
           {/* Balance Bar */}
           {user && user.balance && (
-            <div className="text-xl font-bold text-gray-800 flex items-center space-x-2">
+            <div className="absolute left-1/2 transform -translate-x-1/2 font-bold text-gray-800 flex items-center space-x-2">
               Balance: {Number(user.balance).toFixed(2)}
             </div>
           )}
           {/* User Info or Login/Register Buttons */}
           <div className="flex items-center space-x-6 ml-auto">
             {user && user._json ? (
-              <div className="flex items-center space-x-4">
-                <img src={avatar} alt="Avatar" className="h-10 w-10 rounded-full" />
-                <span className="text-gray-800 font-medium">{name}</span>
-                <button
-                  className="ml-2 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                  onClick={() => {
-                    window.location.href = '/api/logout';
-                  }}
-                >
-                  Logout
-                </button>
+              <div className="relative">
+                <div className="flex items-center space-x-4 cursor-pointer" onClick={() => setShowMenu(!showMenu)}>
+                  <img src={avatar} alt="Avatar" className="h-10 w-10 rounded-full" />
+                  <span className="text-gray-800 font-medium">{name}</span>
+                  <svg
+                    className="w-5 h-5 text-gray-800"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+                {showMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded shadow-md">
+                    <button
+                      className="block w-full px-4 py-2 text-left text-gray-800 hover:bg-gray-100"
+                      onClick={() => {
+                        window.location.href = '/api/logout';
+                      }}
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <>
