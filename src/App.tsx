@@ -92,12 +92,6 @@ const AppContent = ({ showLoginModal, setShowLoginModal }: { showLoginModal: boo
 
   return (
     <div className="relative min-h-screen bg-gray-100">
-      {/* Balance Bar */}
-      {user && user.balance && (
-        <span className="text-xl font-bold text-gray-800 flex items-center space-x-2">
-          Balance: {Number(user.balance).toFixed(2)}
-        </span>
-      )}
       {/* Navbar */}
       <header className="bg-white shadow-md sticky top-0 z-50 w-full">
         <div className="mx-auto px-4 py-4 flex justify-between items-center">
@@ -106,6 +100,12 @@ const AppContent = ({ showLoginModal, setShowLoginModal }: { showLoginModal: boo
             <img src="/vite.svg" alt="Logo" className="h-10 w-10" />
             <span className="text-2xl font-bold text-gray-800">CSJungle.ggxdd123</span>
           </div>
+          {/* Balance Bar */}
+          {user && user.balance && (
+            <div className="text-xl font-bold text-gray-800 flex items-center space-x-2">
+              Balance: {Number(user.balance).toFixed(2)}
+            </div>
+          )}
           {/* User Info or Login/Register Buttons */}
           <div className="flex items-center space-x-6 ml-auto">
             {user && user._json ? (
