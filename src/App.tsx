@@ -92,8 +92,9 @@ const AppContent = ({ showLoginModal, setShowLoginModal }: { showLoginModal: boo
     <div className="relative min-h-screen bg-gray-100">
       {/* Balance Bar */}
       {user && user._json && typeof user.balance === 'number' && (
-        <div className="absolute left-1/2 transform -translate-x-1/2 top-4 z-50 bg-white shadow px-6 py-2 rounded-full border border-gray-200 text-xl font-bold text-green-700">
-          Balance: {user.balance}
+        <div className="absolute left-1/2 transform -translate-x-1/2 top-4 z-50 bg-white shadow px-6 py-2 rounded-full border border-gray-200 text-xl font-bold text-green-700 flex items-center space-x-2">
+          <img src="/assets/coin.svg" alt="Coin" className="h-6 w-6" />
+          <span>Balance: {user.balance}</span>
         </div>
       )}
       {/* Navbar */}
