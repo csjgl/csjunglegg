@@ -101,7 +101,7 @@ const AppContent = ({ showLoginModal, setShowLoginModal }: { showLoginModal: boo
       )}
       {/* Navbar */}
       <header className="bg-white shadow-md sticky top-0 z-50 w-full">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+        <div className="mx-auto px-4 py-4 flex justify-between items-center">
           {/* Logo */}
           <div className="flex items-center space-x-4">
             <img src="/vite.svg" alt="Logo" className="h-10 w-10" />
