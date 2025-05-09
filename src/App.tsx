@@ -2,6 +2,7 @@ import './index.css';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import axios from 'axios';
 import LoginModal, { UserProfile } from './components/LoginModal';
+import ChatSidebar from './components/ChatSidebar';
 
 // Define a User type for the user state
 interface User {
@@ -67,7 +68,12 @@ const App = () => {
   
   return (
     <UserProvider>
-      <AppContent showLoginModal={showLoginModal} setShowLoginModal={setShowLoginModal} />
+      <div className="flex">
+        <div className="flex-1">
+          <AppContent showLoginModal={showLoginModal} setShowLoginModal={setShowLoginModal} />
+        </div>
+        <ChatSidebar />
+      </div>
     </UserProvider>
   );
 };
@@ -88,8 +94,6 @@ const AppContent = ({ showLoginModal, setShowLoginModal }: { showLoginModal: boo
   // Defensive check for user shape
   const avatar = user && user._json && user._json.avatarmedium ? user._json.avatarmedium : '/vite.svg';
   const name = user && user._json && user._json.personaname ? user._json.personaname : 'Guest';
-
-  console.log('User object:', user); // Debug: Log user object to verify balance
 
   return (
     <div className="relative min-h-screen bg-gray-100">
