@@ -4,6 +4,8 @@
 
 @import "tailwindcss/utilities";
 
+@import "./custom.css";
+
 /* Add any custom global styles below */
 
 :root {
