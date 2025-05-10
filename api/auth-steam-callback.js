@@ -110,11 +110,26 @@ export default async function handler(req, res) {
     {
       sub: steamUser.steamid, // Set the subject to the user's Steam ID
       aud: 'authenticated', // Set the audience to 'authenticated'
-      ...steamUser, // Include other user details
     },
     process.env.JWT_SECRET,
     { expiresIn: '7d' }
   );
+
+  // Debugging: Log the generated JWT for inspection
+  console.log('Generated JWT:', token);
+
+  // Decode the JWT for debugging purposes
+  const decodedToken = jwt.decode(token, { complete: true });
+  console.log('Decoded JWT Header:', decodedToken?.header);
+  console.log('Decoded JWT Payload:', decodedToken?.payload);
+
+  // Verify the JWT signature for debugging
+  try {
+    jwt.verify(token, process.env.JWT_SECRET);
+    console.log('JWT signature is valid.');
+  } catch (err) {
+    console.error('JWT signature verification failed:', err.message);
+  }
 
   // Send the token in the response body instead of setting it as a cookie
   res.setHeader('Set-Cookie', `token=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=604800`);
