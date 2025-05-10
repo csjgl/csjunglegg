@@ -12,18 +12,15 @@ export default async function handler(req, res) {
 
   try {
     const userFromToken = jwt.verify(token.split('=')[1], process.env.JWT_SECRET);
-    
-    // Debugging: Log the entire decoded token
-    console.log('Decoded JWT:', userFromToken);
-
-    // Use `sub` as the primary identifier
-    const steamId = userFromToken.sub;
-    if (!steamId || typeof steamId !== 'string') {
-      res.status(401).json({ error: 'Invalid token or missing sub claim', details: userFromToken });
+    console.log('Decoded JWT:', userFromToken); // Debug: log JWT payload
+    console.log('Type of steamid:', typeof userFromToken.steamid, 'Value:', userFromToken.steamid); // Debug: log type and value
+    if (!userFromToken || typeof userFromToken.steamid !== 'string' || !userFromToken.steamid) {
+      res.status(401).json({ error: 'Invalid token or missing steamid', details: userFromToken });
       return;
     }
 
     // Defensive: fallback for displayName and avatar
+    const steamId = userFromToken.steamid;
     const name = userFromToken.displayName || userFromToken.personaname || 'Unknown';
     const avatar = (userFromToken._json && userFromToken._json.avatarmedium) || userFromToken.avatar || '';
 
