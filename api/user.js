@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   if (!token) return res.json(null);
 
   try {
-    const userFromToken = jwt.verify(token.split('=')[1], process.env.JWT_SECRET);
+    const userFromToken = jwt.verify(token.split('=')[1], import.meta.env.JWT_SECRET);
     console.log('Decoded JWT:', userFromToken); // Debug: log JWT payload
     console.log('Type of steamid:', typeof userFromToken.steamid, 'Value:', userFromToken.steamid); // Debug: log type and value
     if (!userFromToken || typeof userFromToken.steamid !== 'string' || !userFromToken.steamid) {

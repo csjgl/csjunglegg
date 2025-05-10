@@ -13,7 +13,7 @@ export default async function handler(req, res) {
 
   try {
     // Verify the token to ensure it's valid
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, import.meta.env.JWT_SECRET);
     res.status(200).json({ token });
   } catch (error) {
     res.status(401).json({ error: 'Invalid token' });
