@@ -14,16 +14,22 @@ const ChatSidebar = () => {
 
   useEffect(() => {
     const setSupabaseSession = async () => {
-      const token = document.cookie
-        .split('; ')
-        .find((row) => row.startsWith('token='))
-        ?.split('=')[1];
+      try {
+        // Fetch the token from the server
+        const response = await fetch('/api/auth-steam-callback');
+        if (!response.ok) {
+          throw new Error('Failed to fetch token from server');
+        }
 
-      if (token) {
+        const { token } = await response.json();
+
+        // Set the Supabase session
         const { error } = await supabase.auth.setSession({ access_token: token, refresh_token: token });
         if (error) {
           console.error('Error setting Supabase session:', error);
         }
+      } catch (err) {
+        console.error('Error during session setup:', err);
       }
     };
 
