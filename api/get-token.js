@@ -11,11 +11,19 @@ export default async function handler(req, res) {
     return;
   }
 
+  // Ensure the secret is correctly loaded from the environment variables
+  const secret = process.env.JWT_SECRET;
+
+  if (!secret) {
+    res.status(500).json({ error: 'JWT_SECRET is not defined in the environment variables' });
+    return;
+  }
+
   try {
-    // Verify the token to ensure it's valid
-    const decoded = jwt.verify(token, import.meta.env.JWT_SECRET);
+    // Verify the token using the correct secret
+    const decoded = jwt.verify(token, secret);
     res.status(200).json({ token });
   } catch (error) {
-    res.status(401).json({ error: 'Invalid token' });
+    res.status(401).json({ error: 'Invalid token', details: error.message });
   }
 }
