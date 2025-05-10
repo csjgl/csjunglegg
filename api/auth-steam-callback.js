@@ -106,14 +106,7 @@ export default async function handler(req, res) {
     displayName: profile.personaname,
     steamid: profile.steamid,
   };
-  const token = jwt.sign(
-    {
-      sub: String(steamUser.steamid), // Explicitly set the subject to the user's Steam ID
-      aud: 'authenticated', // Set the audience claim to match Supabase
-    },
-    process.env.JWT_SECRET,
-    { expiresIn: '7d' } // Token expiration
-  );
+  const token = jwt.sign(steamUser, process.env.JWT_SECRET, { expiresIn: '7d' });
   res.setHeader('Set-Cookie', `token=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=604800`);
   res.writeHead(302, { Location: '/' });
   res.end();
