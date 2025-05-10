@@ -115,7 +115,7 @@ export default async function handler(req, res) {
     { expiresIn: '7d' }
   );
 
-  // Send the token in the response body instead of setting it as a cookie
+  // Set the token as an HttpOnly cookie
   res.setHeader('Set-Cookie', `token=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=604800`);
   res.writeHead(302, { Location: '/' });
   res.end();
