@@ -51,7 +51,19 @@ const ChatSidebar = () => {
 
   const sendMessage = async () => {
     if (newMessage.trim()) {
-      await supabase.from('messages').insert([{ content: newMessage }]);
+      const { error } = await supabase.from('messages').insert([
+        {
+          content: newMessage,
+          userId: 'Anonymous', // Replace with actual user ID if available
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+
+      if (error) {
+        console.error('Error sending message:', error);
+        return;
+      }
+
       setNewMessage('');
     }
   };
