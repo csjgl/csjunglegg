@@ -15,10 +15,22 @@ const ChatSidebar = () => {
   useEffect(() => {
     // Fetch initial messages
     const fetchMessages = async () => {
-      const { data } = await supabase
-        .from('messages') // No type arguments needed
-        .select('*')
-        .order('timestamp', { ascending: true });
+      const response = await fetch(
+        'https://bkvkvqcgnapeojafxqsn.supabase.co/rest/v1/messages?select=*&order=timestamp.asc',
+        {
+          headers: {
+            apiKey: import.meta.env.VITE_SUPABASE_ANON_KEY, // Use your Supabase anon key
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch messages');
+      }
+
+      const data = await response.json();
+      console.log(data); // Logs the fetched messages
       setMessages(data || []);
     };
 
