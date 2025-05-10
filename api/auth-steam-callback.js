@@ -107,7 +107,8 @@ export default async function handler(req, res) {
     steamid: profile.steamid,
   };
   const token = jwt.sign(steamUser, process.env.JWT_SECRET, { expiresIn: '7d' });
-  res.setHeader('Set-Cookie', `token=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=604800`);
-  res.writeHead(302, { Location: '/' });
-  res.end();
+
+  // Send the token in the response body instead of setting it as a cookie
+  res.writeHead(200, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify({ token }));
 }
