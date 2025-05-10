@@ -16,7 +16,7 @@ const ChatSidebar = () => {
     // Fetch initial messages
     const fetchMessages = async () => {
       const { data } = await supabase
-        .from<Message>('messages')
+        .from('messages') // No type arguments needed
         .select('*')
         .order('timestamp', { ascending: true });
       setMessages(data || []);
@@ -26,14 +26,14 @@ const ChatSidebar = () => {
 
     // Subscribe to new messages
     const subscription = supabase
-      .from<Message>('messages')
-      .on('INSERT', (payload: { new: Message }) => {
-        setMessages((prev) => [...prev, payload.new]);
+      .channel('public:messages') // Subscribe to the messages table
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+        setMessages((prev) => [...prev, payload.new as Message]);
       })
       .subscribe();
 
     return () => {
-      supabase.removeSubscription(subscription);
+      subscription.unsubscribe(); // Correct method to unsubscribe
     };
   }, []);
 
