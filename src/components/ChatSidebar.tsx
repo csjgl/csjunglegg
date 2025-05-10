@@ -15,8 +15,8 @@ const ChatSidebar = () => {
   useEffect(() => {
     const setSupabaseSession = async () => {
       try {
-        // Fetch the token from the server
-        const response = await fetch('/api/auth-steam-callback');
+        // Fetch the token from the new API endpoint
+        const response = await fetch('/api/get-token');
         if (!response.ok) {
           throw new Error('Failed to fetch token from server');
         }

@@ -103,7 +103,7 @@ const AppContent = ({ showLoginModal, setShowLoginModal }: { showLoginModal: boo
           {/* Logo */}
           <div className="flex items-center space-x-4">
             <img src="/vite.svg" alt="Logo" className="h-10 w-10" />
-            <span className="text-2xl font-bold text-gray-800">CSJungle.ggxdd123</span>
+            <span className="text-2xl font-bold text-gray-800">CSJungle.gg</span>
           </div>
           {/* Balance Bar */}
           {user && user.balance && (
