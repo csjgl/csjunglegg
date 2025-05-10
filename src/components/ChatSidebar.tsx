@@ -66,15 +66,16 @@ const ChatSidebar = () => {
           </div>
         ))}
       </div>
-      <div className="flex">
+      <div className="flex items-center space-x-2">
         <input
           type="text"
           className="flex-1 border border-gray-300 rounded px-2 py-1"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
+          placeholder="Type a message..."
         />
         <button
-          className="ml-2 px-4 py-1 bg-blue-500 text-white rounded"
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           onClick={sendMessage}
         >
           Send
