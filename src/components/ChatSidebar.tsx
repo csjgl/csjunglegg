@@ -13,6 +13,24 @@ const ChatSidebar = () => {
   const [newMessage, setNewMessage] = useState('');
 
   useEffect(() => {
+    const setSupabaseSession = async () => {
+      const token = document.cookie
+        .split('; ')
+        .find((row) => row.startsWith('token='))
+        ?.split('=')[1];
+
+      if (token) {
+        const { error } = await supabase.auth.setSession({ access_token: token, refresh_token: token });
+        if (error) {
+          console.error('Error setting Supabase session:', error);
+        }
+      }
+    };
+
+    setSupabaseSession();
+  }, []);
+
+  useEffect(() => {
     // Fetch initial messages
     const fetchMessages = async () => {
       const response = await fetch(
