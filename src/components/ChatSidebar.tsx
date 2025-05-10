@@ -50,10 +50,10 @@ const ChatSidebar = () => {
   }, []);
 
   const sendMessage = async () => {
-    const { data: userData } = await supabase.auth.getUser(); // Fetch the authenticated user
+    const { data: userData, error: userError } = await supabase.auth.getUser(); // Fetch the authenticated user
 
-    if (!userData?.user) {
-      console.error('User is not logged in. Cannot send message.');
+    if (userError || !userData?.user) {
+      console.error('User is not logged in or an error occurred:', userError);
       return;
     }
 
