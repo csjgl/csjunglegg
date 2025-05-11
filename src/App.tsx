@@ -83,12 +83,18 @@ const AppContent = ({ showLoginModal, setShowLoginModal }: { showLoginModal: boo
   const user = useUser();
   const loading = useUserLoading();
   const [showMenu, setShowMenu] = useState(false);
+  const [userTriggeredLogin, setUserTriggeredLogin] = useState(false); // Track if user explicitly opened the modal
 
   useEffect(() => {
-    if (!user && !loading) {
-      setShowLoginModal(true); // Show login modal only if user is null and not loading
+    if (!user && !loading && !userTriggeredLogin) {
+      setShowLoginModal(true); // Show login modal only if not triggered by the user
     }
-  }, [user, loading]);
+  }, [user, loading, userTriggeredLogin]);
+
+  const handleLoginClick = () => {
+    setUserTriggeredLogin(true); // Mark that the user explicitly opened the modal
+    setShowLoginModal(true);
+  };
 
   const handleLogout = async () => {
     setShowLoginModal(false); // Ensure modal is closed during logout
@@ -146,7 +152,7 @@ const AppContent = ({ showLoginModal, setShowLoginModal }: { showLoginModal: boo
               </div>
             ) : (
               <button
-                onClick={() => setShowLoginModal(true)}
+                onClick={handleLoginClick}
                 className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors duration-200"
               >
                 Login
