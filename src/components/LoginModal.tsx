@@ -10,6 +10,11 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }: LoginModalProps) => 
 
   useEffect(() => {
     const checkSession = async (retryCount = 3) => {
+      if (!isLoading) {
+        console.log('Skipping session fetch because user is logged out or not in login flow.');
+        return;
+      }
+
       for (let i = 0; i < retryCount; i++) {
         const { data, error } = await supabase.auth.getSession();
         if (error) {
