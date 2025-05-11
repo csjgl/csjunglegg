@@ -1,7 +1,7 @@
 import './index.css';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import axios from 'axios';
-import LoginModal, { UserProfile } from './components/LoginModal';
+import LoginModal from './components/LoginModal';
 import ChatSidebar from './components/ChatSidebar';
 
 // Define a User type for the user state
@@ -118,50 +118,20 @@ const AppContent = ({ showLoginModal, setShowLoginModal }: { showLoginModal: boo
                 <div className="flex items-center space-x-4 cursor-pointer" onClick={() => setShowMenu(!showMenu)}>
                   <img src={avatar} alt="Avatar" className="h-10 w-10 rounded-full" />
                   <span className="text-gray-800 font-medium">{name}</span>
-                  <svg
-                    className="w-5 h-5 text-gray-800"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                  </svg>
                 </div>
-                {showMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded shadow-md">
-                    <button
-                      className="block w-full px-4 py-2 text-left text-gray-800 hover:bg-gray-100"
-                      onClick={() => {
-                        window.location.href = '/api/logout';
-                      }}
-                    >
-                      Logout
-                    </button>
-                  </div>
-                )}
               </div>
             ) : (
-              <>
-                <a
-                  href="/api/auth-steam"
-                  className="text-gray-800 font-medium hover:text-blue-500"
-                >
-                  Login
-                </a>
-                <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Register</button>
-              </>
+              <button
+                onClick={() => setShowLoginModal(true)}
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors duration-200"
+              >
+                Login
+              </button>
             )}
           </div>
         </div>
       </header>
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-gray-800">Welcome to CSJungle.gg</h1>
-        <p className="mt-4 text-gray-600">This is a placeholder for your dashboard content.</p>
-      </main>
-      {/* User Profile Component */}
-      <UserProfile />
+
       {/* Login Modal */}
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
     </div>
