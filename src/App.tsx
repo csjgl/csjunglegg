@@ -91,7 +91,7 @@ const AppContent = ({ showLoginModal, setShowLoginModal }: { showLoginModal: boo
       setAutoTriggered(true); // Mark as auto-triggered immediately
       setShowLoginModal(true); // Automatically show login modal only once
     }
-  }, [user, loading, userTriggeredLogin, autoTriggered]);
+  }, [user, loading, userTriggeredLogin]); // Removed `autoTriggered` from dependencies to prevent re-triggering
 
   const handleLoginClick = () => {
     setUserTriggeredLogin(true); // Mark that the user explicitly opened the modal
