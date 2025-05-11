@@ -13,14 +13,14 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }: LoginModalProps) => 
       const { data: session, error } = await supabase.auth.getSession();
       if (error) {
         console.error('Error fetching session:', error);
-      } else if (session) {
-        console.log('Session found:', session);
+      } else if (session && isLoading) {
+        console.log('Session found after login:', session);
         onClose();
       }
     };
 
     checkSession();
-  }, []);
+  }, [isLoading]);
 
   const handleSteamLogin = () => {
     setIsLoading(true); // Set loading state
