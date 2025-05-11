@@ -17,16 +17,19 @@ const ChatSidebar = () => {
       try {
         // Check if the user is logged in
         const { data: userData, error: userError } = await supabase.auth.getUser();
-        // Debugging: Log user data and error
         console.log('User Data:', userData);
         console.log('User Error:', userError);
 
-        // Debugging: Check if session exists in local storage
-        const session = supabase.auth.getSession();
-        console.log('Session from local storage:', session);
+        if (userError || !userData?.user) {
+          console.warn('User is not logged in. Skipping session setup.');
+          return;
+        }
 
-        // Attempt to refresh the session if missing
-        if ((userError as any)?.message === 'Auth session missing!') {
+        // Debugging: Check if session exists in local storage
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        console.log('Session from local storage:', sessionData);
+
+        if (sessionError || !sessionData?.session) {
           console.log('Attempting to refresh session...');
           const { data: refreshedSession, error: refreshError } = await supabase.auth.refreshSession();
           if (refreshError) {
@@ -45,7 +48,10 @@ const ChatSidebar = () => {
         const { token } = await response.json();
 
         // Set the Supabase session
-        const { error } = await supabase.auth.setSession({ access_token: token, refresh_token: token });
+        const { error } = await supabase.auth.setSession({
+          access_token: token,
+          refresh_token: token, // Ensure correct token usage
+        });
         if (error) {
           console.error('Error setting Supabase session:', error);
         }
