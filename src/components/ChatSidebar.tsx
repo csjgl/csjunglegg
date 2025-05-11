@@ -15,6 +15,13 @@ const ChatSidebar = () => {
   useEffect(() => {
     const setSupabaseSession = async () => {
       try {
+        // Check if the user is logged in
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (userError || !userData?.user) {
+          console.log('User is not logged in, skipping token fetch.');
+          return;
+        }
+
         // Fetch the token from the new API endpoint
         const response = await fetch('/api/get-token');
         if (!response.ok) {
