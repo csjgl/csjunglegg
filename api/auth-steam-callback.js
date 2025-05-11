@@ -140,6 +140,7 @@ export default async function handler(req, res) {
       }),
     });
 
+    console.log('Supabase REST API response status:', response.status);
     if (!response.ok) {
       const error = await response.json();
       console.error('Error initializing Supabase session via REST API:', error);
@@ -147,6 +148,9 @@ export default async function handler(req, res) {
       res.end();
       return;
     }
+
+    const responseBody = await response.json();
+    console.log('Supabase REST API response body:', responseBody);
 
     console.log('Supabase session initialized successfully via REST API.');
 
