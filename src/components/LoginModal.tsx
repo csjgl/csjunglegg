@@ -16,20 +16,28 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }: LoginModalProps) => 
       }
 
       for (let i = 0; i < retryCount; i++) {
-        const { data, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error('Error fetching session:', error);
-        } else if (data.session && data.session.user) {
-          console.log('Valid session found:', data.session);
-          onClose();
-          return;
-        } else {
-          console.log('Session is null or invalid:', data.session);
+        try {
+          const { data, error } = await supabase.auth.getSession();
+          if (error) {
+            console.error('Error fetching session:', error);
+          } else if (data.session && data.session.user) {
+            console.log('Valid session found:', data.session);
+            onClose();
+            return;
+          } else {
+            console.log('Session is null or invalid:', data.session);
+          }
+        } catch (err) {
+          console.error('Unexpected error during session fetch:', err);
         }
+
         console.log(`Retrying session fetch (${i + 1}/${retryCount})...`);
         await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second before retrying
       }
-      console.warn('Session is still missing after retries.');
+
+      console.warn('Session is still missing after retries. Logging out user.');
+      await supabase.auth.signOut(); // Ensure user is logged out if session is invalid
+      setIsLoading(false); // Reset loading state
     };
 
     checkSession();
