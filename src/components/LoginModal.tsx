@@ -30,6 +30,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }: LoginModalProps) => 
 
   const handleSteamLogin = () => {
     setIsLoading(true); // Set loading state
+    console.log('Redirecting to Steam login...'); // Debugging log
     window.location.href = '/api/auth-steam'; // Redirect to Steam login
   };
 

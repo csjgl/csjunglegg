@@ -94,6 +94,7 @@ const AppContent = ({ showLoginModal, setShowLoginModal }: { showLoginModal: boo
   }, [user, loading, userTriggeredLogin]);
 
   const handleLoginClick = () => {
+    console.log('Login button clicked'); // Debugging log
     setUserTriggeredLogin(true); // Mark that the user explicitly opened the modal
     setShowLoginModal(true);
   };
