@@ -10,8 +10,22 @@ if (!supabaseUrl || !supabaseAnonKey) {
 console.log('Supabase URL:', supabaseUrl);
 console.log('Supabase Anon Key:', supabaseAnonKey);
 
-// Create a Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Create a Supabase client with session persistence enabled
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true, // Ensure sessions are persisted in local storage
+    autoRefreshToken: true, // Automatically refresh tokens when they expire
+  },
+});
+
+// Debugging: Log the current session
+supabase.auth.getSession().then(({ data, error }) => {
+  if (error) {
+    console.error('Error fetching session:', error);
+  } else {
+    console.log('Current session:', data);
+  }
+});
 
 // Helper function to include the API key in headers for all requests
 export const fetchWithApiKey = async (url: string, options: RequestInit = {}) => {
