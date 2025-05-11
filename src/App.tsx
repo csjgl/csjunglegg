@@ -84,6 +84,19 @@ const AppContent = ({ showLoginModal, setShowLoginModal }: { showLoginModal: boo
   const loading = useUserLoading();
   const [showMenu, setShowMenu] = useState(false);
 
+  useEffect(() => {
+    if (!user && !loading) {
+      setShowLoginModal(true); // Show login modal only if user is null and not loading
+    }
+  }, [user, loading]);
+
+  const handleLogout = async () => {
+    setShowLoginModal(false); // Ensure modal is closed during logout
+    await supabase.auth.signOut(); // Log out from Supabase
+    await fetch('/api/logout', { method: 'POST' }); // Clear Steam session
+    window.location.reload(); // Refresh the page to reset the state
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
@@ -123,11 +136,7 @@ const AppContent = ({ showLoginModal, setShowLoginModal }: { showLoginModal: boo
                 {showMenu && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50">
                     <button
-                      onClick={async () => {
-                        await supabase.auth.signOut(); // Log out from Supabase
-                        await fetch('/api/logout', { method: 'POST' }); // Clear Steam session
-                        window.location.reload(); // Refresh the page to reset the state
-                      }}
+                      onClick={handleLogout}
                       className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100"
                     >
                       Logout
