@@ -73,56 +73,60 @@ async function fetchSteamProfile(steamid) {
 }
 
 export default async function handler(req, res) {
-  const { query } = req;
-  if (!query || query['openid.mode'] !== 'id_res' || !query['openid.claimed_id']) {
+  try {
+    const { query } = req;
+    if (!query || query['openid.mode'] !== 'id_res' || !query['openid.claimed_id']) {
+      console.error('Invalid OpenID response:', query);
+      res.writeHead(302, { Location: '/' });
+      res.end();
+      return;
+    }
+    const steamid = extractSteamId(query['openid.claimed_id']);
+    if (!steamid) {
+      console.error('Failed to extract Steam ID:', query['openid.claimed_id']);
+      res.writeHead(302, { Location: '/' });
+      res.end();
+      return;
+    }
+    const valid = await verifyWithSteam(query);
+    if (!valid) {
+      console.error('Steam verification failed:', query);
+      res.writeHead(302, { Location: '/' });
+      res.end();
+      return;
+    }
+    const profile = await fetchSteamProfile(steamid);
+    if (!profile) {
+      console.error('Failed to fetch Steam profile for ID:', steamid);
+      res.writeHead(302, { Location: '/' });
+      res.end();
+      return;
+    }
+    const steamUser = {
+      _json: {
+        avatarmedium: profile.avatarmedium,
+        personaname: profile.personaname,
+      },
+      displayName: profile.personaname,
+      steamid: profile.steamid,
+    };
+    const token = jwt.sign(steamUser, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const { error } = await supabase.auth.setSession({
+      access_token: token,
+      refresh_token: token,
+    });
+    if (error) {
+      console.error('Error initializing Supabase session:', error);
+      res.writeHead(302, { Location: '/' });
+      res.end();
+      return;
+    }
+    res.setHeader('Set-Cookie', `token=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=604800`);
     res.writeHead(302, { Location: '/' });
     res.end();
-    return;
+  } catch (err) {
+    console.error('Unexpected error in auth-steam-callback:', err);
+    res.statusCode = 500;
+    res.end('Internal Server Error');
   }
-  const steamid = extractSteamId(query['openid.claimed_id']);
-  if (!steamid) {
-    res.writeHead(302, { Location: '/' });
-    res.end();
-    return;
-  }
-  // Verify with Steam
-  const valid = await verifyWithSteam(query);
-  if (!valid) {
-    res.writeHead(302, { Location: '/' });
-    res.end();
-    return;
-  }
-  // Fetch real Steam profile
-  const profile = await fetchSteamProfile(steamid);
-  if (!profile) {
-    res.writeHead(302, { Location: '/' });
-    res.end();
-    return;
-  }
-  const steamUser = {
-    _json: {
-      avatarmedium: profile.avatarmedium,
-      personaname: profile.personaname,
-    },
-    displayName: profile.personaname,
-    steamid: profile.steamid,
-  };
-  const token = jwt.sign(steamUser, process.env.JWT_SECRET, { expiresIn: '7d' });
-
-  // Initialize Supabase session
-  const { error } = await supabase.auth.setSession({
-    access_token: token,
-    refresh_token: token, // Use the same token for simplicity
-  });
-
-  if (error) {
-    console.error('Error initializing Supabase session:', error);
-    res.writeHead(302, { Location: '/' });
-    res.end();
-    return;
-  }
-
-  res.setHeader('Set-Cookie', `token=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=604800`);
-  res.writeHead(302, { Location: '/' });
-  res.end();
 }
