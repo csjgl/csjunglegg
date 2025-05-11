@@ -84,14 +84,14 @@ const AppContent = ({ showLoginModal, setShowLoginModal }: { showLoginModal: boo
   const loading = useUserLoading();
   const [showMenu, setShowMenu] = useState(false);
   const [userTriggeredLogin, setUserTriggeredLogin] = useState(false); // Track if user explicitly opened the modal
+  const [autoTriggered, setAutoTriggered] = useState(false); // Track if modal was auto-triggered
 
   useEffect(() => {
-    if (!user && !loading && !userTriggeredLogin) {
-      if (!showLoginModal) {
-        setShowLoginModal(true); // Open modal only if it is not already open
-      }
+    if (!user && !loading && !userTriggeredLogin && !autoTriggered) {
+      setAutoTriggered(true); // Mark as auto-triggered immediately
+      setShowLoginModal(true); // Automatically show login modal only once
     }
-  }, [user, loading, userTriggeredLogin, showLoginModal]);
+  }, [user, loading, userTriggeredLogin, autoTriggered]);
 
   const handleLoginClick = () => {
     setUserTriggeredLogin(true); // Mark that the user explicitly opened the modal
