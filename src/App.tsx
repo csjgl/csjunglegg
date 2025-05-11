@@ -87,9 +87,11 @@ const AppContent = ({ showLoginModal, setShowLoginModal }: { showLoginModal: boo
 
   useEffect(() => {
     if (!user && !loading && !userTriggeredLogin) {
-      setShowLoginModal(true); // Automatically show login modal only once
+      if (!showLoginModal) {
+        setShowLoginModal(true); // Open modal only if it is not already open
+      }
     }
-  }, [user, loading, userTriggeredLogin]); // Removed `showLoginModal` from dependencies
+  }, [user, loading, userTriggeredLogin, showLoginModal]);
 
   const handleLoginClick = () => {
     setUserTriggeredLogin(true); // Mark that the user explicitly opened the modal
