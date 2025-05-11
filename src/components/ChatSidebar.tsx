@@ -25,6 +25,17 @@ const ChatSidebar = () => {
           return;
         }
 
+        // Attempt to refresh the session if missing
+        if ((userError as any)?.message === 'Auth session missing!') {
+          console.log('Attempting to refresh session...');
+          const { data: refreshedSession, error: refreshError } = await supabase.auth.refreshSession();
+          if (refreshError) {
+            console.error('Failed to refresh session:', refreshError);
+            return;
+          }
+          console.log('Session refreshed:', refreshedSession);
+        }
+
         // Fetch the token from the new API endpoint
         const response = await fetch('/api/get-token');
         if (!response.ok) {
