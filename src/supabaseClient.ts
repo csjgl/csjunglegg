@@ -10,4 +10,15 @@ if (!supabaseUrl || !supabaseAnonKey) {
 console.log('Supabase URL:', supabaseUrl);
 console.log('Supabase Anon Key:', supabaseAnonKey);
 
+// Create a Supabase client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Helper function to include the API key in headers for all requests
+export const fetchWithApiKey = async (url: string, options: RequestInit = {}) => {
+  const headers = {
+    ...(options.headers || {}),
+    apikey: supabaseAnonKey,
+  };
+
+  return fetch(url, { ...options, headers });
+};
