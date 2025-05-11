@@ -63,7 +63,7 @@ supabase.auth.onAuthStateChange((event, session) => {
     if (session) {
       console.log('Initial session received:', session);
     } else {
-      console.warn('No session found during INITIAL_SESSION event.');
+      console.warn('No session found during INITIAL_SESSION event. Skipping retries.');
     }
   }
 });
