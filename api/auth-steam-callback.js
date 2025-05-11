@@ -74,6 +74,11 @@ async function fetchSteamProfile(steamid) {
 
 export default async function handler(req, res) {
   try {
+    console.log('Environment Variables:', {
+      STEAM_API_KEY: process.env.STEAM_API_KEY ? 'SET' : 'NOT SET',
+      JWT_SECRET: process.env.JWT_SECRET ? 'SET' : 'NOT SET',
+    });
+
     const { query } = req;
     if (!query || query['openid.mode'] !== 'id_res' || !query['openid.claimed_id']) {
       console.error('Invalid OpenID response:', query);
@@ -81,6 +86,7 @@ export default async function handler(req, res) {
       res.end();
       return;
     }
+
     const steamid = extractSteamId(query['openid.claimed_id']);
     if (!steamid) {
       console.error('Failed to extract Steam ID:', query['openid.claimed_id']);
@@ -88,6 +94,7 @@ export default async function handler(req, res) {
       res.end();
       return;
     }
+
     const valid = await verifyWithSteam(query);
     if (!valid) {
       console.error('Steam verification failed:', query);
@@ -95,6 +102,7 @@ export default async function handler(req, res) {
       res.end();
       return;
     }
+
     const profile = await fetchSteamProfile(steamid);
     if (!profile) {
       console.error('Failed to fetch Steam profile for ID:', steamid);
@@ -102,6 +110,9 @@ export default async function handler(req, res) {
       res.end();
       return;
     }
+
+    console.log('Steam profile fetched successfully:', profile);
+
     const steamUser = {
       _json: {
         avatarmedium: profile.avatarmedium,
@@ -110,17 +121,24 @@ export default async function handler(req, res) {
       displayName: profile.personaname,
       steamid: profile.steamid,
     };
+
     const token = jwt.sign(steamUser, process.env.JWT_SECRET, { expiresIn: '7d' });
+    console.log('JWT token generated successfully.');
+
     const { error } = await supabase.auth.setSession({
       access_token: token,
       refresh_token: token,
     });
+
     if (error) {
       console.error('Error initializing Supabase session:', error);
       res.writeHead(302, { Location: '/' });
       res.end();
       return;
     }
+
+    console.log('Supabase session initialized successfully.');
+
     res.setHeader('Set-Cookie', `token=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=604800`);
     res.writeHead(302, { Location: '/' });
     res.end();
