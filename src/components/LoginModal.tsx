@@ -1,10 +1,32 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { supabase } from '../supabaseClient';
 
 interface LoginModalProps {
   onClose: () => void;
 }
 
 const LoginModal: React.FC<LoginModalProps> = ({ onClose }: LoginModalProps) => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: session, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Error fetching session:', error);
+      } else if (session) {
+        console.log('Session found:', session);
+        onClose();
+      }
+    };
+
+    checkSession();
+  }, []);
+
+  const handleSteamLogin = () => {
+    setIsLoading(true); // Set loading state
+    window.location.href = '/api/auth-steam'; // Redirect to Steam login
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
       <div className="p-8 rounded-lg shadow-xl w-96 jungle-bg-color">
@@ -14,6 +36,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }: LoginModalProps) => 
           <button
             onClick={onClose}
             className="text-white text-3xl leading-none hover:text-gray-400 focus:outline-none p-1"
+            disabled={isLoading} // Disable close button while loading
           >
             &times;
           </button>
@@ -27,6 +50,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }: LoginModalProps) => 
               type="text"
               className="w-full px-4 py-2 border border-green-900 rounded-md shadow-sm bg-transparent text-white focus:outline-none focus:ring-2 focus:ring-green-400"
               placeholder="Enter your email or username"
+              disabled={isLoading} // Disable input while loading
             />
           </div>
 
@@ -37,6 +61,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }: LoginModalProps) => 
               type="password"
               className="w-full px-4 py-2 border border-green-900 rounded-md shadow-sm bg-transparent text-white focus:outline-none focus:ring-2 focus:ring-green-400"
               placeholder="Enter your password"
+              disabled={isLoading} // Disable input while loading
             />
           </div>
 
@@ -44,6 +69,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }: LoginModalProps) => 
           <button
             type="submit"
             className="w-full py-3 px-6 text-white bg-green-600 rounded-md hover:bg-green-700 transition-colors duration-200"
+            disabled={isLoading} // Disable button while loading
           >
             Login
           </button>
@@ -51,18 +77,23 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }: LoginModalProps) => 
 
         {/* Steam Login */}
         <div className="mt-4 text-center">
-          <a
-            href="/api/auth-steam"
+          <button
+            onClick={handleSteamLogin}
             className="w-full flex items-center justify-center px-4 py-2 bg-[#171a21] text-white rounded hover:bg-[#1b2838] mt-4 font-semibold shadow"
             style={{ textDecoration: 'none' }}
+            disabled={isLoading} // Disable button while loading
           >
-            <img
-              src="https://steamcommunity-a.akamaihd.net/public/images/v5/ico_16x16.gif"
-              alt="Steam"
-              className="mr-2 h-5 w-5"
-            />
-            Sign in with Steam
-          </a>
+            {isLoading ? 'Redirecting...' : (
+              <>
+                <img
+                  src="https://steamcommunity-a.akamaihd.net/public/images/v5/ico_16x16.gif"
+                  alt="Steam"
+                  className="mr-2 h-5 w-5"
+                />
+                Sign in with Steam
+              </>
+            )}
+          </button>
         </div>
       </div>
     </div>
