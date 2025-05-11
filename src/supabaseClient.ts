@@ -18,22 +18,32 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-// Debugging: Log the current session
+// Debugging: Log session refresh attempts
 supabase.auth.getSession().then(({ data, error }) => {
   if (error) {
     console.error('Error fetching session:', error);
   } else {
-    console.log('Current session:', data);
+    console.log('Current session fetched successfully:', data);
   }
 });
 
-// Add an auth state change listener to track session changes
-supabase.auth.onAuthStateChange((event, session) => {
+// Enhanced session handling and debugging
+supabase.auth.onAuthStateChange(async (event, session) => {
   console.log(`Auth state changed: ${event}`);
+
+  if (event === 'INITIAL_SESSION') {
+    if (session) {
+      console.log('Session initialized successfully:', session);
+    } else {
+      console.warn('Session is missing after INITIAL_SESSION event.');
+    }
+  }
+
   if (session) {
-    console.log('New session:', session);
+    console.log('New session detected:', session);
   } else {
-    console.warn('Session is missing after auth state change.');
+    console.warn('Session is missing after auth state change. Logging out user.');
+    await supabase.auth.signOut(); // Ensure user is logged out if session is invalid
   }
 });
 
