@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import https from 'https';
+import fetch from 'node-fetch';
 import { supabase } from '../src/supabaseClient';
 
 function extractSteamId(claimedId) {
@@ -125,19 +126,29 @@ export default async function handler(req, res) {
     const token = jwt.sign(steamUser, process.env.JWT_SECRET, { expiresIn: '7d' });
     console.log('JWT token generated successfully.');
 
-    const { error } = await supabase.auth.setSession({
-      access_token: token,
-      refresh_token: token,
+    // Use Supabase REST API to set the session
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_ANON_KEY;
+    const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: supabaseKey,
+      },
+      body: JSON.stringify({
+        refresh_token: token,
+      }),
     });
 
-    if (error) {
-      console.error('Error initializing Supabase session:', error);
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('Error initializing Supabase session via REST API:', error);
       res.writeHead(302, { Location: '/' });
       res.end();
       return;
     }
 
-    console.log('Supabase session initialized successfully.');
+    console.log('Supabase session initialized successfully via REST API.');
 
     res.setHeader('Set-Cookie', `token=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=604800`);
     res.writeHead(302, { Location: '/' });
