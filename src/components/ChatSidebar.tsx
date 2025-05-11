@@ -21,11 +21,12 @@ const ChatSidebar = () => {
         console.log('User Error:', userError);
 
         if (userError || !userData?.user) {
-          console.warn('User is not logged in.');
+          console.warn('User is not logged in or session is missing. Skipping session setup.');
           setIsLoggedIn(false);
-        } else {
-          setIsLoggedIn(true);
+          return; // Exit early if the user is not logged in
         }
+
+        setIsLoggedIn(true);
       } catch (err) {
         console.error('Error checking user session:', err);
         setIsLoggedIn(false);
