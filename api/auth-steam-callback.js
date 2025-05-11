@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import https from 'https';
+import { supabase } from '../src/supabaseClient';
 
 function extractSteamId(claimedId) {
   const match = claimedId && claimedId.match(/\/(\d{17,})$/);
@@ -107,6 +108,20 @@ export default async function handler(req, res) {
     steamid: profile.steamid,
   };
   const token = jwt.sign(steamUser, process.env.JWT_SECRET, { expiresIn: '7d' });
+
+  // Initialize Supabase session
+  const { error } = await supabase.auth.setSession({
+    access_token: token,
+    refresh_token: token, // Use the same token for simplicity
+  });
+
+  if (error) {
+    console.error('Error initializing Supabase session:', error);
+    res.writeHead(302, { Location: '/' });
+    res.end();
+    return;
+  }
+
   res.setHeader('Set-Cookie', `token=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=604800`);
   res.writeHead(302, { Location: '/' });
   res.end();
