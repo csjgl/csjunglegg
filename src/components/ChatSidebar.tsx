@@ -17,6 +17,9 @@ const ChatSidebar = () => {
       try {
         // Check if the user is logged in
         const { data: userData, error: userError } = await supabase.auth.getUser();
+        // Debugging: Log user data and error
+        console.log('User Data:', userData);
+        console.log('User Error:', userError);
         if (userError || !userData?.user) {
           console.log('User is not logged in, skipping token fetch.');
           return;
@@ -82,6 +85,9 @@ const ChatSidebar = () => {
 
   const sendMessage = async () => {
     const { data: userData, error: userError } = await supabase.auth.getUser(); // Fetch the authenticated user
+    // Debugging: Log user data and error
+    console.log('User Data:', userData);
+    console.log('User Error:', userError);
 
     if (userError || !userData?.user) {
       console.error('User is not logged in or an error occurred:', userError);
