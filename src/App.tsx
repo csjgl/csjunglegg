@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import axios from 'axios';
 import LoginModal from './components/LoginModal';
 import ChatSidebar from './components/ChatSidebar';
+import { supabase } from './supabaseClient';
 
 // Define a User type for the user state
 interface User {
@@ -119,6 +120,19 @@ const AppContent = ({ showLoginModal, setShowLoginModal }: { showLoginModal: boo
                   <img src={avatar} alt="Avatar" className="h-10 w-10 rounded-full" />
                   <span className="text-gray-800 font-medium">{name}</span>
                 </div>
+                {showMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50">
+                    <button
+                      onClick={async () => {
+                        await supabase.auth.signOut();
+                        window.location.reload(); // Refresh the page to reset the state
+                      }}
+                      className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <button
