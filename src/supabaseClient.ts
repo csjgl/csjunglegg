@@ -18,24 +18,37 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-// Debugging: Log session refresh attempts
-supabase.auth.getSession().then(({ data, error }) => {
-  if (error) {
-    console.error('Error fetching session:', error);
-  } else {
-    console.log('Current session fetched successfully:', data);
+// Improved session fetching with retry logic
+async function fetchSessionWithRetry(retryCount = 3, delay = 1000) {
+  for (let i = 0; i < retryCount; i++) {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) {
+      console.error('Error fetching session:', error);
+    } else if (data.session) {
+      console.log('Session fetched successfully:', data.session);
+      return data.session;
+    } else {
+      console.warn('Session is null, retrying...');
+    }
+    await new Promise((resolve) => setTimeout(resolve, delay));
   }
-});
+  console.error('Failed to fetch session after retries.');
+  return null;
+}
 
 // Enhanced session handling and debugging
 supabase.auth.onAuthStateChange(async (event, session) => {
   console.log(`Auth state changed: ${event}`);
 
   if (event === 'INITIAL_SESSION') {
+    if (!session) {
+      console.warn('Session is missing after INITIAL_SESSION event. Retrying fetch...');
+      session = await fetchSessionWithRetry();
+    }
     if (session) {
       console.log('Session initialized successfully:', session);
     } else {
-      console.warn('Session is missing after INITIAL_SESSION event.');
+      console.error('Session is still missing after retries.');
     }
   }
 
