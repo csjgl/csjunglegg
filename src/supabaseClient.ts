@@ -27,6 +27,16 @@ supabase.auth.getSession().then(({ data, error }) => {
   }
 });
 
+// Add an auth state change listener to track session changes
+supabase.auth.onAuthStateChange((event, session) => {
+  console.log(`Auth state changed: ${event}`);
+  if (session) {
+    console.log('New session:', session);
+  } else {
+    console.warn('Session is missing after auth state change.');
+  }
+});
+
 // Helper function to include the API key in headers for all requests
 export const fetchWithApiKey = async (url: string, options: RequestInit = {}) => {
   const headers = {
