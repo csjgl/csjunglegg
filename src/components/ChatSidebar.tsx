@@ -20,10 +20,10 @@ const ChatSidebar = () => {
         // Debugging: Log user data and error
         console.log('User Data:', userData);
         console.log('User Error:', userError);
-        if (userError || !userData?.user) {
-          console.log('User is not logged in, skipping token fetch.');
-          return;
-        }
+
+        // Debugging: Check if session exists in local storage
+        const session = supabase.auth.getSession();
+        console.log('Session from local storage:', session);
 
         // Attempt to refresh the session if missing
         if ((userError as any)?.message === 'Auth session missing!') {
