@@ -73,8 +73,12 @@ async function fetchSteamProfile(steamid) {
 }
 
 export default async function handler(req, res) {
+  console.log('Starting Steam login callback handler...');
+
   try {
     const { query } = req;
+    console.log('Received query parameters:', query);
+
     if (!query || query['openid.mode'] !== 'id_res' || !query['openid.claimed_id']) {
       res.writeHead(302, { Location: '/' });
       res.end();
@@ -82,6 +86,8 @@ export default async function handler(req, res) {
     }
 
     const steamid = extractSteamId(query['openid.claimed_id']);
+    console.log('Extracted Steam ID:', steamid);
+
     if (!steamid) {
       res.writeHead(302, { Location: '/' });
       res.end();
@@ -89,6 +95,8 @@ export default async function handler(req, res) {
     }
 
     const valid = await verifyWithSteam(query);
+    console.log('Steam verification result:', valid);
+
     if (!valid) {
       res.writeHead(302, { Location: '/' });
       res.end();
@@ -96,6 +104,8 @@ export default async function handler(req, res) {
     }
 
     const profile = await fetchSteamProfile(steamid);
+    console.log('Fetched Steam profile:', profile);
+
     if (!profile) {
       res.writeHead(302, { Location: '/' });
       res.end();
@@ -112,6 +122,7 @@ export default async function handler(req, res) {
     };
 
     const token = jwt.sign(steamUser, process.env.JWT_SECRET, { expiresIn: '7d' });
+    console.log('Generated JWT token:', token);
 
     // Use Supabase middleware to set the session
     const { error } = await supabase.auth.setSession({
@@ -125,6 +136,8 @@ export default async function handler(req, res) {
       res.end();
       return;
     }
+
+    console.log('Supabase session initialized successfully.');
 
     res.setHeader('Set-Cookie', `token=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=604800`);
     res.writeHead(302, { Location: '/' });
