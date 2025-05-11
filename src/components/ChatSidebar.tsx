@@ -25,13 +25,6 @@ const ChatSidebar = () => {
         const session = supabase.auth.getSession();
         console.log('Session from local storage:', session);
 
-        // Handle missing session by prompting the user to log in again
-        if ((userError as any)?.message === 'Auth session missing!') {
-          console.log('Session is missing. Prompting user to log in again.');
-          alert('Your session has expired. Please log in again.');
-          return;
-        }
-
         // Attempt to refresh the session if missing
         if ((userError as any)?.message === 'Auth session missing!') {
           console.log('Attempting to refresh session...');
