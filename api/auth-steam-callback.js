@@ -1,7 +1,5 @@
 import jwt from 'jsonwebtoken';
 import https from 'https';
-import fetch from 'node-fetch';
-import { supabase } from '../src/supabaseClient';
 
 function extractSteamId(claimedId) {
   const match = claimedId && claimedId.match(/\/(\d{17,})$/);
@@ -74,92 +72,58 @@ async function fetchSteamProfile(steamid) {
 }
 
 export default async function handler(req, res) {
-  try {
-    console.log('Environment Variables:', {
-      STEAM_API_KEY: process.env.STEAM_API_KEY ? 'SET' : 'NOT SET',
-      JWT_SECRET: process.env.JWT_SECRET ? 'SET' : 'NOT SET',
-    });
-
-    const { query } = req;
-    if (!query || query['openid.mode'] !== 'id_res' || !query['openid.claimed_id']) {
-      console.error('Invalid OpenID response:', query);
-      res.writeHead(302, { Location: '/' });
-      res.end();
-      return;
-    }
-
-    const steamid = extractSteamId(query['openid.claimed_id']);
-    if (!steamid) {
-      console.error('Failed to extract Steam ID:', query['openid.claimed_id']);
-      res.writeHead(302, { Location: '/' });
-      res.end();
-      return;
-    }
-
-    const valid = await verifyWithSteam(query);
-    if (!valid) {
-      console.error('Steam verification failed:', query);
-      res.writeHead(302, { Location: '/' });
-      res.end();
-      return;
-    }
-
-    const profile = await fetchSteamProfile(steamid);
-    if (!profile) {
-      console.error('Failed to fetch Steam profile for ID:', steamid);
-      res.writeHead(302, { Location: '/' });
-      res.end();
-      return;
-    }
-
-    console.log('Steam profile fetched successfully:', profile);
-
-    const steamUser = {
-      _json: {
-        avatarmedium: profile.avatarmedium,
-        personaname: profile.personaname,
-      },
-      displayName: profile.personaname,
-      steamid: profile.steamid,
-    };
-
-    const token = jwt.sign(steamUser, process.env.JWT_SECRET, { expiresIn: '7d' });
-    console.log('JWT token generated successfully.');
-
-    // Use Supabase REST API to set the session
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_ANON_KEY;
-    const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        apikey: supabaseKey,
-      },
-      body: JSON.stringify({
-        refresh_token: token,
-      }),
-    });
-
-    console.log('Supabase REST API response status:', response.status);
-    if (!response.ok) {
-      const error = await response.json();
-      console.error('Error initializing Supabase session via REST API:', error);
-      res.writeHead(302, { Location: '/' });
-      res.end();
-      return;
-    }
-
-    const responseBody = await response.json();
-    console.log('Supabase REST API response body:', responseBody);
-
-    console.log('Supabase session initialized successfully via REST API.');
-
-    res.setHeader('Set-Cookie', `token=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=604800`);
+  const { query } = req;
+  if (!query || query['openid.mode'] !== 'id_res' || !query['openid.claimed_id']) {
     res.writeHead(302, { Location: '/' });
     res.end();
-  } catch (err) {
-    console.error('Unexpected error in auth-steam-callback:', err);
-    res.statusCode = 500;
-    res.end('Internal Server Error');
+    return;
   }
+  const steamid = extractSteamId(query['openid.claimed_id']);
+  if (!steamid) {
+    res.writeHead(302, { Location: '/' });
+    res.end();
+    return;
+  }
+  // Verify with Steam
+  const valid = await verifyWithSteam(query);
+  if (!valid) {
+    res.writeHead(302, { Location: '/' });
+    res.end();
+    return;
+  }
+  // Fetch real Steam profile
+  const profile = await fetchSteamProfile(steamid);
+  if (!profile) {
+    res.writeHead(302, { Location: '/' });
+    res.end();
+    return;
+  }
+  const steamUser = {
+    _json: {
+      avatarmedium: profile.avatarmedium,
+      personaname: profile.personaname,
+    },
+    displayName: profile.personaname,
+    steamid: profile.steamid,
+  };
+  const token = jwt.sign(steamUser, process.env.JWT_SECRET, { expiresIn: '7d' });
+  res.setHeader('Set-Cookie', `token=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=604800`);
+
+  // Replace Supabase REST API call with auth.signInWithIdToken
+  const { data, error } = await supabase.auth.signInWithIdToken({
+    provider: 'custom',
+    token,
+  });
+
+  if (error) {
+    console.error('Error initializing Supabase session with signInWithIdToken:', error);
+    res.writeHead(302, { Location: '/' });
+    res.end();
+    return;
+  }
+
+  console.log('Supabase session initialized successfully with signInWithIdToken:', data);
+
+  res.writeHead(302, { Location: '/' });
+  res.end();
 }
