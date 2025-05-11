@@ -13,6 +13,10 @@ export default async function handler(req, res) {
       console.log('Supabase session cleared successfully.');
     }
 
+    // Ensure session-related operations are stopped
+    isUserLoggedOut = true;
+    console.log('User logged out. Session-related operations stopped.');
+
     // Clear the token cookie
     res.setHeader('Set-Cookie', 'token=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0');
     console.log('Token cookie cleared. Redirecting to home page...');

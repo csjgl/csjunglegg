@@ -21,7 +21,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 // Prevent session fetching when user is logged out
 let isUserLoggedOut = false;
 
-// Improved session fetching with retry logic
+// Ensure session-related operations are fully stopped when logged out
 async function fetchSessionWithRetry(retryCount = 3, delay = 1000) {
   if (isUserLoggedOut) {
     console.log('Skipping session fetch because user is logged out.');
@@ -29,6 +29,11 @@ async function fetchSessionWithRetry(retryCount = 3, delay = 1000) {
   }
 
   for (let i = 0; i < retryCount; i++) {
+    if (isUserLoggedOut) {
+      console.log('User logged out during session fetch. Aborting retries.');
+      return null;
+    }
+
     const { data, error } = await supabase.auth.getSession();
     if (error) {
       console.error('Error fetching session:', error);
@@ -45,7 +50,7 @@ async function fetchSessionWithRetry(retryCount = 3, delay = 1000) {
 }
 
 // Enhanced session fetching and logout handling
-supabase.auth.onAuthStateChange(async (event, session) => {
+supabase.auth.onAuthStateChange((event, session) => {
   console.log(`Auth state changed: ${event}`);
 
   if (event === 'SIGNED_OUT') {
@@ -54,17 +59,12 @@ supabase.auth.onAuthStateChange(async (event, session) => {
     return;
   }
 
-  if (event === 'INITIAL_SESSION' && !session) {
-    console.warn('Session is missing after INITIAL_SESSION event. Retrying fetch...');
-    session = await fetchSessionWithRetry();
-  }
-
-  if (session) {
-    console.log('New session detected:', session);
-    isUserLoggedOut = false; // Reset logout state if a session is detected
-  } else {
-    console.warn('Session is missing after auth state change. Logging out user.');
-    await supabase.auth.signOut(); // Ensure user is logged out if session is invalid
+  if (event === 'INITIAL_SESSION') {
+    if (session) {
+      console.log('Initial session received:', session);
+    } else {
+      console.warn('No session found during INITIAL_SESSION event.');
+    }
   }
 });
 
