@@ -36,7 +36,7 @@ async function fetchSessionWithRetry(retryCount = 3, delay = 1000) {
   return null;
 }
 
-// Enhanced session handling and debugging
+// Enhanced session fetching and logout handling
 supabase.auth.onAuthStateChange(async (event, session) => {
   console.log(`Auth state changed: ${event}`);
 
@@ -50,6 +50,11 @@ supabase.auth.onAuthStateChange(async (event, session) => {
     } else {
       console.error('Session is still missing after retries.');
     }
+  }
+
+  if (event === 'SIGNED_OUT') {
+    console.log('User signed out. Clearing local session state.');
+    await supabase.auth.signOut(); // Ensure Supabase session is cleared
   }
 
   if (session) {
