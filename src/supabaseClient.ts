@@ -18,8 +18,16 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
+// Prevent session fetching when user is logged out
+let isUserLoggedOut = false;
+
 // Improved session fetching with retry logic
 async function fetchSessionWithRetry(retryCount = 3, delay = 1000) {
+  if (isUserLoggedOut) {
+    console.log('Skipping session fetch because user is logged out.');
+    return null;
+  }
+
   for (let i = 0; i < retryCount; i++) {
     const { data, error } = await supabase.auth.getSession();
     if (error) {
@@ -40,25 +48,20 @@ async function fetchSessionWithRetry(retryCount = 3, delay = 1000) {
 supabase.auth.onAuthStateChange(async (event, session) => {
   console.log(`Auth state changed: ${event}`);
 
-  if (event === 'INITIAL_SESSION') {
-    if (!session) {
-      console.warn('Session is missing after INITIAL_SESSION event. Retrying fetch...');
-      session = await fetchSessionWithRetry();
-    }
-    if (session) {
-      console.log('Session initialized successfully:', session);
-    } else {
-      console.error('Session is still missing after retries.');
-    }
+  if (event === 'SIGNED_OUT') {
+    console.log('User signed out. Stopping session-related operations.');
+    isUserLoggedOut = true;
+    return;
   }
 
-  if (event === 'SIGNED_OUT') {
-    console.log('User signed out. Clearing local session state.');
-    await supabase.auth.signOut(); // Ensure Supabase session is cleared
+  if (event === 'INITIAL_SESSION' && !session) {
+    console.warn('Session is missing after INITIAL_SESSION event. Retrying fetch...');
+    session = await fetchSessionWithRetry();
   }
 
   if (session) {
     console.log('New session detected:', session);
+    isUserLoggedOut = false; // Reset logout state if a session is detected
   } else {
     console.warn('Session is missing after auth state change. Logging out user.');
     await supabase.auth.signOut(); // Ensure user is logged out if session is invalid
