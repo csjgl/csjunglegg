@@ -11,13 +11,15 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }: LoginModalProps) => 
   useEffect(() => {
     const checkSession = async (retryCount = 3) => {
       for (let i = 0; i < retryCount; i++) {
-        const { data: session, error } = await supabase.auth.getSession();
+        const { data, error } = await supabase.auth.getSession();
         if (error) {
           console.error('Error fetching session:', error);
-        } else if (session) {
-          console.log('Session found:', session);
+        } else if (data.session && data.session.user) {
+          console.log('Valid session found:', data.session);
           onClose();
           return;
+        } else {
+          console.log('Session is null or invalid:', data.session);
         }
         console.log(`Retrying session fetch (${i + 1}/${retryCount})...`);
         await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second before retrying
