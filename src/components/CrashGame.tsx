@@ -77,6 +77,12 @@ const CrashGame: React.FC = () => {
       setError('Missing user, bet amount, or game ID');
       return;
     }
+    console.log('Placing bet with:', {
+      userId: user?.steamId,
+      amount: Number(betAmount),
+      gameId: game?.id,
+      userObj: user
+    });
     setIsBetting(true);
     setError('');
     try {
