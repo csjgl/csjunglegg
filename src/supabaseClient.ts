@@ -18,16 +18,12 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-// Prevent session fetching when user is logged out
-let isUserLoggedOut = false;
-
 // Enhanced session fetching and logout handling
 supabase.auth.onAuthStateChange((event, session) => {
   console.log(`Auth state changed: ${event}`);
 
   if (event === 'SIGNED_OUT') {
     console.log('User signed out. Stopping session-related operations.');
-    isUserLoggedOut = true;
     return;
   }
 
@@ -36,7 +32,6 @@ supabase.auth.onAuthStateChange((event, session) => {
       console.log('Initial session received:', session);
     } else {
       console.warn('No session found during INITIAL_SESSION event. Skipping retries and stopping operations.');
-      isUserLoggedOut = true;
     }
   }
 });
