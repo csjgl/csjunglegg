@@ -2,6 +2,7 @@ import './index.css';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import axios from 'axios';
 import LoginModal from './components/LoginModal';
+import CrashGame from './components/CrashGame';
 
 // Define a User type for the user state
 interface User {
@@ -64,19 +65,24 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
 const App = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
-  
+  const [page, setPage] = useState<'dashboard' | 'crash'>('dashboard');
   return (
     <UserProvider>
       <div className="flex">
         <div className="flex-1">
-          <AppContent showLoginModal={showLoginModal} setShowLoginModal={setShowLoginModal} />
+          <AppContent 
+            showLoginModal={showLoginModal} 
+            setShowLoginModal={setShowLoginModal} 
+            page={page}
+            setPage={setPage}
+          />
         </div>
       </div>
     </UserProvider>
   );
 };
 
-const AppContent = ({ showLoginModal, setShowLoginModal }: { showLoginModal: boolean; setShowLoginModal: (show: boolean) => void }) => {
+const AppContent = ({ showLoginModal, setShowLoginModal, page, setPage }: { showLoginModal: boolean; setShowLoginModal: (show: boolean) => void; page: 'dashboard' | 'crash'; setPage: (p: 'dashboard' | 'crash') => void }) => {
   const user = useUser();
   const loading = useUserLoading();
   const [showMenu, setShowMenu] = useState(false);
@@ -124,6 +130,21 @@ const AppContent = ({ showLoginModal, setShowLoginModal }: { showLoginModal: boo
             <img src="/vite.svg" alt="Logo" className="h-10 w-10" />
             <span className="text-2xl font-bold text-gray-800">CSJungle.gg</span>
           </div>
+          {/* Menu */}
+          <nav className="flex items-center space-x-6">
+            <button
+              className={`px-4 py-2 rounded ${page === 'dashboard' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+              onClick={() => setPage('dashboard')}
+            >
+              Dashboard
+            </button>
+            <button
+              className={`px-4 py-2 rounded ${page === 'crash' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+              onClick={() => setPage('crash')}
+            >
+              Crash
+            </button>
+          </nav>
           {/* Balance Bar */}
           {user && user.balance && (
             <div className="absolute left-1/2 transform -translate-x-1/2 font-bold text-gray-800 flex items-center space-x-2">
@@ -163,6 +184,11 @@ const AppContent = ({ showLoginModal, setShowLoginModal }: { showLoginModal: boo
 
       {/* Login Modal */}
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
+      {/* Main Content */}
+      {page === 'dashboard' && (
+        <div>{/* Dashboard content goes here, or leave empty for now */}</div>
+      )}
+      {page === 'crash' && <CrashGame />}
     </div>
   );
 };
