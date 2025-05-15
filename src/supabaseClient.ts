@@ -21,34 +21,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 // Prevent session fetching when user is logged out
 let isUserLoggedOut = false;
 
-// Ensure session-related operations are fully stopped when logged out
-async function fetchSessionWithRetry(retryCount = 3, delay = 1000) {
-  if (isUserLoggedOut) {
-    console.log('Skipping session fetch because user is logged out.');
-    return null;
-  }
-
-  for (let i = 0; i < retryCount; i++) {
-    if (isUserLoggedOut) {
-      console.log('User logged out during session fetch. Aborting retries.');
-      return null;
-    }
-
-    const { data, error } = await supabase.auth.getSession();
-    if (error) {
-      console.error('Error fetching session:', error);
-    } else if (data.session) {
-      console.log('Session fetched successfully:', data.session);
-      return data.session;
-    } else {
-      console.warn('Session is null, retrying...');
-    }
-    await new Promise((resolve) => setTimeout(resolve, delay));
-  }
-  console.error('Failed to fetch session after retries.');
-  return null;
-}
-
 // Enhanced session fetching and logout handling
 supabase.auth.onAuthStateChange((event, session) => {
   console.log(`Auth state changed: ${event}`);
