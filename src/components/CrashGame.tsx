@@ -41,6 +41,7 @@ const CrashGame: React.FC = () => {
   useEffect(() => {
     let animationFrame: number;
     let lastStart: number | null = null;
+    let crashedAt: number | null = null;
 
     const fetchStatus = async () => {
       try {
@@ -49,23 +50,26 @@ const CrashGame: React.FC = () => {
         // If the game is running, update multiplier
         if (res.data.game.status === 'running' && res.data.game.starttime) {
           lastStart = new Date(res.data.game.starttime).getTime();
-        } else if (res.data.game.status === 'crashed' && res.data.game.crashpoint) {
+          crashedAt = null;
+        } else if (res.data.game.status === 'crashed' && res.data.game.crashpoint && res.data.game.starttime) {
           setMultiplier(res.data.game.crashpoint);
           lastStart = null;
+          crashedAt = new Date(res.data.game.endtime || Date.now()).getTime();
         } else {
           setMultiplier(1.0);
           lastStart = null;
+          crashedAt = null;
         }
         // Find my bet
         if (user && res.data.game.bets) {
           const found = res.data.game.bets.find((b: CrashBetData) => b.userId === (user as any).steamid);
           setMyBet(found || null);
         }
-        // Betting countdown logic
+        // Betting countdown logic (set to 1 second)
         if (res.data.game.status === 'pending' && res.data.game.starttime) {
           const start = new Date(res.data.game.starttime).getTime();
           const now = Date.now();
-          const secondsLeft = 10 - Math.floor((now - start) / 1000);
+          const secondsLeft = 1 - Math.floor((now - start) / 1000);
           setBettingCountdown(secondsLeft > 0 ? secondsLeft : 0);
         } else {
           setBettingCountdown(null);
@@ -77,10 +81,16 @@ const CrashGame: React.FC = () => {
 
     // Animation loop for real-time multiplier
     const animate = () => {
-      if (game && game.status === 'running' && game.starttime) {
+      if (game && game.status === 'running' && game.starttime && !crashedAt) {
         const start = lastStart || new Date(game.starttime).getTime();
         const now = Date.now();
         const seconds = (now - start) / 1000;
+        const crashSeconds = game.crashpoint ? Math.log(game.crashpoint) / 0.05 : 0;
+        if (seconds >= crashSeconds) {
+          // Instantly set to crash value
+          setMultiplier(game.crashpoint || 1.0);
+          return;
+        }
         setMultiplier(Math.max(1, Math.floor((100 * Math.exp(0.05 * seconds))) / 100));
         animationFrame = requestAnimationFrame(animate);
       }
@@ -99,7 +109,7 @@ const CrashGame: React.FC = () => {
       clearInterval(interval);
       if (animationFrame) cancelAnimationFrame(animationFrame);
     };
-  }, [user, game?.status, game?.starttime]);
+  }, [user, game?.status, game?.starttime, game?.crashpoint, game?.endtime]);
 
   // Real-time sync for crash game
   useEffect(() => {
