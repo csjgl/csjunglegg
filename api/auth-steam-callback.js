@@ -1,6 +1,5 @@
 import jwt from 'jsonwebtoken';
 import https from 'https';
-import { supabase } from '../src/supabaseClient';
 
 function extractSteamId(claimedId) {
   const match = claimedId && claimedId.match(/\/(\d{17,})$/);
