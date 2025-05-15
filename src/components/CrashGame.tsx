@@ -49,7 +49,7 @@ const CrashGame: React.FC = () => {
         }
         // Find my bet
         if (user && res.data.game.bets) {
-          const found = res.data.game.bets.find((b: CrashBetData) => b.userId === user.id);
+          const found = res.data.game.bets.find((b: CrashBetData) => b.userId === user.steamId);
           setMyBet(found || null);
         }
       } catch (e: any) {
@@ -63,11 +63,12 @@ const CrashGame: React.FC = () => {
 
   // Place a bet
   const handleBet = async () => {
+    if (!user) return;
     setIsBetting(true);
     setError('');
     try {
       const res = await axios.post('/api/crash/bet', {
-        userId: user.id,
+        userId: user.steamId,
         amount: Number(betAmount),
         gameId: game?.id,
       });
