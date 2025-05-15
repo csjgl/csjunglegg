@@ -29,6 +29,7 @@ const CrashGame: React.FC = () => {
   const [isBetting, setIsBetting] = useState(false);
   const [isCashedOut, setIsCashedOut] = useState(false);
   const [error, setError] = useState('');
+  const [bettingCountdown, setBettingCountdown] = useState<number | null>(null);
 
   // Poll for game status every second
   useEffect(() => {
@@ -52,6 +53,15 @@ const CrashGame: React.FC = () => {
           const found = res.data.game.bets.find((b: CrashBetData) => b.userId === user.steamId);
           setMyBet(found || null);
         }
+        // Betting countdown logic
+        if (res.data.game.status === 'pending' && res.data.game.starttime) {
+          const start = new Date(res.data.game.starttime).getTime();
+          const now = Date.now();
+          const secondsLeft = 10 - Math.floor((now - start) / 1000);
+          setBettingCountdown(secondsLeft > 0 ? secondsLeft : 0);
+        } else {
+          setBettingCountdown(null);
+        }
       } catch (e: any) {
         setError('Failed to fetch game status');
       }
@@ -63,14 +73,17 @@ const CrashGame: React.FC = () => {
 
   // Place a bet
   const handleBet = async () => {
-    if (!user) return;
+    if (!user || !betAmount || !game?.id) {
+      setError('Missing user, bet amount, or game ID');
+      return;
+    }
     setIsBetting(true);
     setError('');
     try {
       const res = await axios.post('/api/crash/bet', {
         userId: user.steamId,
         amount: Number(betAmount),
-        gameId: game?.id,
+        gameId: game.id,
       });
       setMyBet(res.data.bet);
     } catch (e: any) {
@@ -102,6 +115,11 @@ const CrashGame: React.FC = () => {
         <span className="text-4xl font-mono font-bold text-green-600">{multiplier.toFixed(2)}x</span>
         <span className="ml-2 text-gray-500">{game?.status === 'crashed' ? 'CRASHED' : game?.status?.toUpperCase()}</span>
       </div>
+      {user && game && game.status === 'pending' && (
+        <div className="mb-2 text-blue-700 font-semibold">
+          Betting phase: {bettingCountdown !== null ? `${bettingCountdown}s left to bet!` : ''}
+        </div>
+      )}
       {user && game && game.status === 'pending' && !myBet && (
         <div className="flex items-center space-x-2 mb-4">
           <input
