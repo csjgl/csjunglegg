@@ -6,6 +6,7 @@ import CrashGame from './components/CrashGame';
 
 // Define a User type for the user state
 interface User {
+  id: string;
   steamId: string;
   _json: {
     avatarmedium: string;

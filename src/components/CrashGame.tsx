@@ -81,10 +81,15 @@ const CrashGame: React.FC = () => {
     setError('');
     try {
       const res = await axios.post('/api/crash/bet', {
-        userId: user.steamId,
+        userId: user.steamId || user.id,
         amount: Number(betAmount),
         gameId: game.id,
       });
+      if (!res.data.bet) {
+        setError('Bet failed: missing userId, amount, or gameId');
+        setIsBetting(false);
+        return;
+      }
       setMyBet(res.data.bet);
     } catch (e: any) {
       setError(e.response?.data?.error || 'Failed to place bet');
