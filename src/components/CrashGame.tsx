@@ -4,9 +4,9 @@ import { useUser } from '../App';
 
 interface CrashGameData {
   id: string;
-  startTime: string;
-  endTime?: string;
-  crashPoint?: number;
+  starttime: string;
+  endtime?: string;
+  crashpoint?: number;
   seed: string;
   status: string;
   bets: CrashBetData[];
@@ -37,13 +37,13 @@ const CrashGame: React.FC = () => {
         const res = await axios.get('/api/crash/status');
         setGame(res.data.game);
         // If the game is running, update multiplier
-        if (res.data.game.status === 'running' && res.data.game.startTime) {
-          const start = new Date(res.data.game.startTime).getTime();
+        if (res.data.game.status === 'running' && res.data.game.starttime) {
+          const start = new Date(res.data.game.starttime).getTime();
           const now = Date.now();
           const seconds = (now - start) / 1000;
           setMultiplier(Math.max(1, Math.floor((100 * Math.exp(0.05 * seconds)))/100));
-        } else if (res.data.game.status === 'crashed' && res.data.game.crashPoint) {
-          setMultiplier(res.data.game.crashPoint);
+        } else if (res.data.game.status === 'crashed' && res.data.game.crashpoint) {
+          setMultiplier(res.data.game.crashpoint);
         } else {
           setMultiplier(1.0);
         }
@@ -163,8 +163,8 @@ const CrashHistory: React.FC = () => {
     <ul className="max-h-32 overflow-y-auto text-sm">
       {games.map(game => (
         <li key={game.id} className="flex justify-between border-b py-1">
-          <span>{new Date(game.startTime).toLocaleTimeString()}</span>
-          <span>{game.crashPoint ? `${game.crashPoint.toFixed(2)}x` : '-'}</span>
+          <span>{new Date(game.starttime).toLocaleTimeString()}</span>
+          <span>{game.crashpoint ? `${game.crashpoint.toFixed(2)}x` : '-'}</span>
           <span>{game.status}</span>
         </li>
       ))}
