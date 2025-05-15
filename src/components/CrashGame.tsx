@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useUser } from '../App';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
 
 interface CrashGameData {
   id: string;
@@ -33,20 +39,22 @@ const CrashGame: React.FC = () => {
 
   // Poll for game status every second
   useEffect(() => {
+    let animationFrame: number;
+    let lastStart: number | null = null;
+
     const fetchStatus = async () => {
       try {
         const res = await axios.get('/api/crash/status');
         setGame(res.data.game);
         // If the game is running, update multiplier
         if (res.data.game.status === 'running' && res.data.game.starttime) {
-          const start = new Date(res.data.game.starttime).getTime();
-          const now = Date.now();
-          const seconds = (now - start) / 1000;
-          setMultiplier(Math.max(1, Math.floor((100 * Math.exp(0.05 * seconds)))/100));
+          lastStart = new Date(res.data.game.starttime).getTime();
         } else if (res.data.game.status === 'crashed' && res.data.game.crashpoint) {
           setMultiplier(res.data.game.crashpoint);
+          lastStart = null;
         } else {
           setMultiplier(1.0);
+          lastStart = null;
         }
         // Find my bet
         if (user && res.data.game.bets) {
@@ -66,10 +74,51 @@ const CrashGame: React.FC = () => {
         setError('Failed to fetch game status');
       }
     };
+
+    // Animation loop for real-time multiplier
+    const animate = () => {
+      if (game && game.status === 'running' && game.starttime) {
+        const start = lastStart || new Date(game.starttime).getTime();
+        const now = Date.now();
+        const seconds = (now - start) / 1000;
+        setMultiplier(Math.max(1, Math.floor((100 * Math.exp(0.05 * seconds))) / 100));
+        animationFrame = requestAnimationFrame(animate);
+      }
+    };
+
     fetchStatus();
     const interval = setInterval(fetchStatus, 1000);
-    return () => clearInterval(interval);
-  }, [user]);
+
+    // Start animation if running
+    if (game && game.status === 'running' && game.starttime) {
+      lastStart = new Date(game.starttime).getTime();
+      animationFrame = requestAnimationFrame(animate);
+    }
+
+    return () => {
+      clearInterval(interval);
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+    };
+  }, [user, game?.status, game?.starttime]);
+
+  // Real-time sync for crash game
+  useEffect(() => {
+    if (!game) return;
+    const channel = supabase
+      .channel('crashgame-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'CrashGame', filter: `id=eq.${game.id}` },
+        () => {
+          // Refetch game status on any change
+          axios.get('/api/crash/status').then(res => setGame(res.data.game));
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [game?.id]);
 
   // Place a bet
   const handleBet = async () => {
