@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   const { data, error } = await supabase
     .from('CrashGame')
     .select('*')
-    .order('startTime', { ascending: false })
+    .order('starttime', { ascending: false })
     .limit(20);
 
   if (error) {
