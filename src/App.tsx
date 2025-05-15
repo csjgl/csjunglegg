@@ -2,7 +2,6 @@ import './index.css';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import axios from 'axios';
 import LoginModal from './components/LoginModal';
-import { supabase } from './supabaseClient';
 
 // Define a User type for the user state
 interface User {
@@ -99,7 +98,6 @@ const AppContent = ({ showLoginModal, setShowLoginModal }: { showLoginModal: boo
 
   const handleLogout = async () => {
     setShowLoginModal(false); // Ensure modal is closed during logout
-    await supabase.auth.signOut(); // Log out from Supabase
     await fetch('/api/logout', { method: 'POST' }); // Clear Steam session
     window.location.reload(); // Refresh the page to reset the state
   };
