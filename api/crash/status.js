@@ -13,35 +13,35 @@ function generateCrashPoint() {
 
 export default async function handler(req, res) {
   // Get the latest crash game
-  let { data: game, error: gameError } = await supabase
+  const { data: games, error: gameError } = await supabase
     .from('CrashGame')
     .select('*, bets:CrashBet(*)')
     .order('starttime', { ascending: false })
-    .limit(1)
-    .single();
+    .limit(1);
 
   if (gameError) {
     res.status(500).json({ error: gameError.message });
     return;
   }
 
+  let game = Array.isArray(games) ? games[0] : games;
   const now = new Date();
   // If no game or last game is crashed and 10s have passed, start a new one
   if (!game || (game.status === 'crashed' && game.endtime && (now.getTime() - new Date(game.endtime).getTime() > 10000))) {
     const crashPoint = generateCrashPoint();
     const seed = Math.random().toString(36).substring(2);
-    const { data: newGame, error: createError } = await supabase
+    const { data: newGames, error: createError } = await supabase
       .from('CrashGame')
       .insert([
         { crashpoint: crashPoint, seed, status: 'pending', starttime: new Date().toISOString() }
       ])
       .select('*, bets:CrashBet(*)')
-      .single();
+      .limit(1);
     if (createError) {
       res.status(500).json({ error: createError.message });
       return;
     }
-    game = newGame;
+    game = Array.isArray(newGames) ? newGames[0] : newGames;
   }
 
   // If game is pending and more than 10s have passed since start, set to running
