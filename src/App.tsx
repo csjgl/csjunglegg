@@ -2,7 +2,6 @@ import './index.css';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import axios from 'axios';
 import LoginModal from './components/LoginModal';
-import ChatSidebar from './components/ChatSidebar';
 import { supabase } from './supabaseClient';
 
 // Define a User type for the user state
@@ -73,7 +72,6 @@ const App = () => {
         <div className="flex-1">
           <AppContent showLoginModal={showLoginModal} setShowLoginModal={setShowLoginModal} />
         </div>
-        <ChatSidebar />
       </div>
     </UserProvider>
   );
