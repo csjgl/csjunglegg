@@ -124,21 +124,7 @@ export default async function handler(req, res) {
     const token = jwt.sign(steamUser, process.env.JWT_SECRET, { expiresIn: '7d' });
     console.log('Generated JWT token:', token);
 
-    // Use Supabase middleware to set the session
-    const { error } = await supabase.auth.setSession({
-      access_token: token,
-      refresh_token: token,
-    });
-
-    if (error) {
-      console.error('Error initializing Supabase session:', error);
-      res.writeHead(302, { Location: '/' });
-      res.end();
-      return;
-    }
-
-    console.log('Supabase session initialized successfully.');
-
+    // Set the token as a cookie for the client to use
     res.setHeader('Set-Cookie', `token=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=604800`);
     res.writeHead(302, { Location: '/' });
     res.end();
