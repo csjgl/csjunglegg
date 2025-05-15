@@ -20,5 +20,6 @@ export default async function handler(req, res) {
     return;
   }
 
-  res.status(200).json({ games: data });
+  // Always return an array, even if empty
+  res.status(200).json({ games: data || [] });
 }
