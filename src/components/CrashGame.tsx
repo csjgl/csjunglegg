@@ -57,7 +57,10 @@ const CrashGame: React.FC = () => {
       setMultiplier(msg.data.crashpoint);
       setDisplayedMultiplier(msg.data.crashpoint);
       setShowCrashEffect(true);
-      setTimeout(() => setShowCrashEffect(false), 1200);
+      setTimeout(() => {
+        setShowCrashEffect(false);
+        setDisplayedMultiplier(1.0); // Reset display to 1.00x after crash effect
+      }, 1200);
     });
     return () => {
       channel.unsubscribe();
@@ -76,12 +79,7 @@ const CrashGame: React.FC = () => {
       setIsCashedOut(false);
       setBetAmount('');
     }
-    if (game.status === 'crashed') {
-      setTimeout(() => {
-        setMultiplier(1.0);
-        setDisplayedMultiplier(1.0);
-      }, 2000);
-    }
+    // No need to reset displayedMultiplier in 'crashed' status here
   }, [game?.id, game?.status]);
 
   useEffect(() => {
