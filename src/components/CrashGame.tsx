@@ -38,7 +38,7 @@ const CrashGame: React.FC = () => {
   const [bettingCountdown, setBettingCountdown] = useState<number | null>(null);
   const [showCrashEffect, setShowCrashEffect] = useState(false);
 
-  // Poll for game status every second
+  // Poll for game status every 500ms for more real-time updates
   useEffect(() => {
     let animationFrame: number;
     let lastStart: number | null = null;
@@ -56,6 +56,8 @@ const CrashGame: React.FC = () => {
         setError('');
         // If the game is running, update multiplier
         if (res.data.game.status === 'running' && res.data.game.starttime) {
+          // Always start at 1.00x when running starts
+          if (multiplier !== 1.0) setMultiplier(1.0);
           lastStart = new Date(res.data.game.starttime).getTime();
           crashedAt = null;
         } else if (res.data.game.status === 'crashed' && res.data.game.crashpoint && res.data.game.starttime) {
@@ -106,7 +108,7 @@ const CrashGame: React.FC = () => {
     };
 
     fetchStatus();
-    const interval = setInterval(fetchStatus, 1000);
+    const interval = setInterval(fetchStatus, 500); // poll every 500ms
 
     // Start animation if running
     if (game && game.status === 'running' && game.starttime) {
