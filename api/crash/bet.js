@@ -41,7 +41,6 @@ export default async function handler(req, res) {
   }
 
   // Place bet
-  // Only allow bets if there is a pending game
   let gameIdToUse = gameId;
   if (!gameId) {
     // Find the latest pending game
@@ -53,10 +52,24 @@ export default async function handler(req, res) {
       .limit(1);
     let pendingGame = Array.isArray(pendingGames) ? pendingGames[0] : pendingGames;
     if (!pendingGame) {
-      res.status(400).json({ error: 'No game available. Please wait for the next round.' });
-      return;
+      // Create a new pending game if none exists
+      const crashpoint = Math.floor((Math.random() * 100) + 10) / 100; // 1.10x - 2.00x
+      const seed = Math.random().toString(36).substring(2);
+      const { data: newGame, error: createError } = await supabase
+        .from('crashgame')
+        .insert([
+          { crashpoint, seed, status: 'pending', starttime: new Date().toISOString() }
+        ])
+        .select()
+        .single();
+      if (createError) {
+        res.status(500).json({ error: createError.message });
+        return;
+      }
+      gameIdToUse = newGame.id;
+    } else {
+      gameIdToUse = pendingGame.id;
     }
-    gameIdToUse = pendingGame.id;
   }
 
   const { data: bet, error: betError } = await supabase
