@@ -44,9 +44,10 @@ export default async function handler(req, res) {
       return;
     }
 
-    // Return both Steam info and balance
+    // Return both Steam info and balance, and include the UUID id
     res.json({
       ...userFromToken,
+      id: dbUser.id, // UUID
       balance: dbUser.balance,
     });
   } catch (e) {
