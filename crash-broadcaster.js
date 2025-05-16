@@ -60,7 +60,28 @@ async function runCrashLoop() {
   while (true) {
     const crashpoint = randomCrashPoint();
     const seed = Math.random().toString(36).slice(2);
+    // Create pending game
     const game = await createGame(seed, crashpoint);
+
+    // Wait for the first bet
+    let hasBet = false;
+    while (!hasBet) {
+      const { data: bets } = await supabase
+        .from('crashbet')
+        .select('id')
+        .eq('gameid', game.id);
+      if (bets && bets.length > 0) {
+        hasBet = true;
+      } else {
+        await new Promise(r => setTimeout(r, 500)); // Poll every 0.5s
+      }
+    }
+
+    // 10s betting window after first bet
+    await new Promise(r => setTimeout(r, 10000));
+
+    // Set to running
+    await setGameRunning(game.id);
     let multiplier = 1.0;
     let crashed = false;
     const start = Date.now();
