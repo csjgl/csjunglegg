@@ -2,7 +2,6 @@ import './index.css';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import axios from 'axios';
 import LoginModal from './components/LoginModal';
-import CrashGame from './components/CrashGame';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import CrashGamePage from './pages/games/crash';
 
