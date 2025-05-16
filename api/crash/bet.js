@@ -10,8 +10,8 @@ export default async function handler(req, res) {
   }
 
   const { userId, amount, gameId } = req.body;
-  if (!userId || !amount || !gameId) {
-    res.status(400).json({ error: 'Missing userId, amount, or gameId' });
+  if (!userId || !amount) {
+    res.status(400).json({ error: 'Missing userId or amount' });
     return;
   }
 
@@ -41,10 +41,42 @@ export default async function handler(req, res) {
   }
 
   // Place bet
+  // If there is no pending game, create one and place the bet
+  let gameIdToUse = gameId;
+  if (!gameId) {
+    // Find or create a pending game
+    let { data: pendingGames } = await supabase
+      .from('CrashGame')
+      .select('*')
+      .eq('status', 'pending')
+      .order('starttime', { ascending: false })
+      .limit(1);
+    let pendingGame = Array.isArray(pendingGames) ? pendingGames[0] : pendingGames;
+    if (!pendingGame) {
+      // Create a new pending game
+      const crashPoint = Math.floor((Math.random() * 890) + 110) / 100;
+      const seed = Math.random().toString(36).substring(2);
+      const { data: newGame, error: createError } = await supabase
+        .from('CrashGame')
+        .insert([
+          { crashpoint: crashPoint, seed, status: 'pending', starttime: new Date().toISOString() }
+        ])
+        .select()
+        .single();
+      if (createError) {
+        res.status(500).json({ error: createError.message });
+        return;
+      }
+      gameIdToUse = newGame.id;
+    } else {
+      gameIdToUse = pendingGame.id;
+    }
+  }
+
   const { data: bet, error: betError } = await supabase
     .from('CrashBet')
     .insert([
-      { userId, amount, gameId }
+      { userId, amount, gameId: gameIdToUse }
     ])
     .select()
     .single();

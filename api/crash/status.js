@@ -26,26 +26,17 @@ export default async function handler(req, res) {
 
   let game = Array.isArray(games) ? games[0] : games;
   const now = new Date();
-  // If no game or last game is crashed and 10s have passed, start a new one
+
+  // Only start a new game if there is at least one bet placed
+  // If no game or last game is crashed and 10s have passed, do NOT auto-start
   if (!game || (game.status === 'crashed' && game.endtime && (now.getTime() - new Date(game.endtime).getTime() > 10000))) {
-    const crashPoint = generateCrashPoint();
-    const seed = Math.random().toString(36).substring(2);
-    const { data: newGames, error: createError } = await supabase
-      .from('CrashGame')
-      .insert([
-        { crashpoint: crashPoint, seed, status: 'pending', starttime: new Date().toISOString() }
-      ])
-      .select('*, bets:CrashBet(*)')
-      .limit(1);
-    if (createError) {
-      res.status(500).json({ error: createError.message });
-      return;
-    }
-    game = Array.isArray(newGames) ? newGames[0] : newGames;
+    // Wait for a bet to be placed to start a new game
+    res.status(200).json({ game: null });
+    return;
   }
 
   // If game is pending and more than 10s have passed since start, set to running
-  if (game.status === 'pending') {
+  if (game.status === 'pending' && game.bets && game.bets.length > 0) {
     const start = new Date(game.starttime).getTime();
     if (now.getTime() - start > 10000) {
       // Set to running

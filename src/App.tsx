@@ -3,6 +3,8 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import axios from 'axios';
 import LoginModal from './components/LoginModal';
 import CrashGame from './components/CrashGame';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import CrashGamePage from './pages/games/crash';
 
 // Define a User type for the user state
 interface User {
@@ -67,28 +69,28 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
 const App = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [page, setPage] = useState<'dashboard' | 'crash'>('dashboard');
   return (
     <UserProvider>
-      <div className="flex">
-        <div className="flex-1">
-          <AppContent 
-            showLoginModal={showLoginModal} 
-            setShowLoginModal={setShowLoginModal} 
-            page={page}
-            setPage={setPage}
-          />
+      <Router>
+        <div className="flex">
+          <div className="flex-1">
+            <Routes>
+              <Route path="/" element={<AppContent showLoginModal={showLoginModal} setShowLoginModal={setShowLoginModal} />} />
+              <Route path="/games/crash" element={<CrashGamePage />} />
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </div>
         </div>
-      </div>
+      </Router>
     </UserProvider>
   );
 };
 
-const AppContent = ({ showLoginModal, setShowLoginModal, page, setPage }: { showLoginModal: boolean; setShowLoginModal: (show: boolean) => void; page: 'dashboard' | 'crash'; setPage: (p: 'dashboard' | 'crash') => void }) => {
+const AppContent = ({ showLoginModal, setShowLoginModal }: { showLoginModal: boolean; setShowLoginModal: (show: boolean) => void; }) => {
   const user = useUser();
   const loading = useUserLoading();
   const [showMenu, setShowMenu] = useState(false);
-  const [userTriggeredLogin, setUserTriggeredLogin] = useState(false); // Track if user explicitly opened the modal
+  const [userTriggeredLogin, setUserTriggeredLogin] = useState(false);
 
   useEffect(() => {
     // Temporarily disable automatic modal logic for debugging
@@ -134,18 +136,8 @@ const AppContent = ({ showLoginModal, setShowLoginModal, page, setPage }: { show
           </div>
           {/* Menu */}
           <nav className="flex items-center space-x-6">
-            <button
-              className={`px-4 py-2 rounded ${page === 'dashboard' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-800'}`}
-              onClick={() => setPage('dashboard')}
-            >
-              Dashboard
-            </button>
-            <button
-              className={`px-4 py-2 rounded ${page === 'crash' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-800'}`}
-              onClick={() => setPage('crash')}
-            >
-              Crash
-            </button>
+            <a href="/" className="px-4 py-2 rounded bg-gray-200 text-gray-800">Dashboard</a>
+            <a href="/games/crash" className="px-4 py-2 rounded bg-gray-200 text-gray-800">Crash</a>
           </nav>
           {/* Balance Bar */}
           {user && user.balance && (
@@ -186,11 +178,7 @@ const AppContent = ({ showLoginModal, setShowLoginModal, page, setPage }: { show
 
       {/* Login Modal */}
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
-      {/* Main Content */}
-      {page === 'dashboard' && (
-        <div>{/* Dashboard content goes here, or leave empty for now */}</div>
-      )}
-      {page === 'crash' && <CrashGame />}
+      {/* Main Content is now routed */}
     </div>
   );
 };
