@@ -39,6 +39,7 @@ const CrashGame: React.FC = () => {
   const [error, setError] = useState('');
   const [showCrashEffect, setShowCrashEffect] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [displayedMultiplier, setDisplayedMultiplier] = useState(1.0);
 
   // Ably real-time integration
   useEffect(() => {
@@ -49,10 +50,12 @@ const CrashGame: React.FC = () => {
     // Listen for multiplier updates
     channel.subscribe('multiplier', (msg: any) => {
       setMultiplier(msg.data.multiplier);
+      setDisplayedMultiplier(msg.data.multiplier);
     });
     // Listen for crash event
     channel.subscribe('crash', (msg: any) => {
       setMultiplier(msg.data.crashpoint);
+      setDisplayedMultiplier(msg.data.crashpoint);
       setShowCrashEffect(true);
       setTimeout(() => setShowCrashEffect(false), 1200);
     });
@@ -64,21 +67,22 @@ const CrashGame: React.FC = () => {
 
   // Reset multiplier and bet state when a new game starts
   // Reset multiplier and bet state when a new game starts or after a crash
-    useEffect(() => {
-      if (!game) return;
-      if (game.status === 'pending') {
+  useEffect(() => {
+    if (!game) return;
+    if (game.status === 'pending') {
+      setMultiplier(1.0);
+      setDisplayedMultiplier(1.0);
+      setMyBet(null);
+      setIsCashedOut(false);
+      setBetAmount('');
+    }
+    if (game.status === 'crashed') {
+      setTimeout(() => {
         setMultiplier(1.0);
-        setMyBet(null);
-        setIsCashedOut(false);
-        setBetAmount(''); // Reset bet input
-      }
-      if (game.status === 'crashed') {
-        // After crash, reset multiplier to 1.0 after the crash effect
-        setTimeout(() => {
-          setMultiplier(1.0);
-        }, 1200); // matches crash effect duration
-      }
-    }, [game?.id, game?.status]);
+        setDisplayedMultiplier(1.0);
+      }, 2000);
+    }
+  }, [game?.id, game?.status]);
 
   useEffect(() => {
     if (!game || game.status !== 'pending') {
@@ -165,36 +169,46 @@ const CrashGame: React.FC = () => {
       <h2 className="text-2xl font-bold mb-4">Crash Game</h2>
       {error && <div className="text-red-500 mb-2">{error}</div>}
       <div className="mb-4 relative">
-        <span className="text-4xl font-mono font-bold text-green-600">{multiplier.toFixed(2)}x</span>
+        <span className="text-4xl font-mono font-bold text-green-600">{displayedMultiplier.toFixed(2)}x</span>
         <span className="ml-2 text-gray-500">{game?.status === 'crashed' ? 'CRASHED' : game?.status?.toUpperCase()}</span>
         {showCrashEffect && (
           <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-5xl font-extrabold text-red-600 animate-bounce z-10" style={{ pointerEvents: 'none' }}>
             💥 CRASHED!
           </span>
         )}
+        {/* Show countdown during betting window */}
+        {game?.status === 'pending' && countdown !== null && countdown > 0 && (
+          <span className="absolute right-0 top-0 text-lg font-bold text-blue-600 bg-white bg-opacity-80 px-2 py-1 rounded shadow">
+            Betting ends in: {countdown}s
+          </span>
+        )}
       </div>
-      {/* Show bet input if no game or game is pending, and user is logged in */}
-      {user && (!game || game.status === 'pending') && !myBet && (
-        <div className="flex items-center space-x-2 mb-4">
-          <input
-            type="number"
-            min="0.01"
-            step="0.01"
-            className="border px-2 py-1 rounded"
-            placeholder="Bet amount"
-            value={betAmount}
-            onChange={e => setBetAmount(e.target.value)}
-            disabled={isBetting}
-          />
-          <button
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-            onClick={handleBet}
-            disabled={isBetting || !betAmount}
-          >
-            Place Bet
-          </button>
-        </div>
-      )}
+      {/* Always show bet input, but disable if not betting window or already bet */}
+      <div className="flex items-center space-x-2 mb-4">
+        <input
+          type="number"
+          min="0.01"
+          step="0.01"
+          className="border px-2 py-1 rounded"
+          placeholder="Bet amount"
+          value={betAmount}
+          onChange={e => setBetAmount(e.target.value)}
+          disabled={isBetting || !game || game.status !== 'pending' || !!myBet}
+        />
+        <button
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          onClick={() => {
+            if (!user) {
+              setError('You must be logged in to place a bet.');
+              return;
+            }
+            handleBet();
+          }}
+          disabled={isBetting || !betAmount || !game || game.status !== 'pending' || !!myBet}
+        >
+          Place Bet
+        </button>
+      </div>
       {user && myBet && !isCashedOut && game?.status === 'running' && (
         <button
           className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 mb-4 animate-pulse"
