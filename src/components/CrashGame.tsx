@@ -186,12 +186,8 @@ const CrashGame: React.FC = () => {
         <span className="text-4xl font-mono font-bold text-green-600">{multiplier.toFixed(2)}x</span>
         <span className="ml-2 text-gray-500">{game?.status === 'crashed' ? 'CRASHED' : game?.status?.toUpperCase()}</span>
       </div>
-      {user && game && game.status === 'pending' && (
-        <div className="mb-2 text-blue-700 font-semibold">
-          Betting phase: {bettingCountdown !== null ? `${bettingCountdown}s left to bet!` : ''}
-        </div>
-      )}
-      {user && game && game.status === 'pending' && !myBet && (
+      {/* Show bet input if no game or game is pending, and user is logged in */}
+      {user && (!game || game.status === 'pending') && !myBet && (
         <div className="flex items-center space-x-2 mb-4">
           <input
             type="number"
