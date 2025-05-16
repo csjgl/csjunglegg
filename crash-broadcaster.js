@@ -30,13 +30,14 @@ function randomCrashPoint() {
   return Math.floor((1 / (1 - X)) * 100) / 100;
 }
 
-async function createGame(seed) {
+async function createGame(seed, crashpoint) {
   const { data, error } = await supabase
     .from('crashgame')
     .insert({
       starttime: new Date().toISOString(),
       seed,
       status: 'running',
+      crashpoint // <-- add this line
     })
     .select()
     .single();
@@ -59,7 +60,7 @@ async function runCrashLoop() {
   while (true) {
     const crashpoint = randomCrashPoint();
     const seed = Math.random().toString(36).slice(2);
-    const game = await createGame(seed);
+    const game = await createGame(seed, crashpoint);
     let multiplier = 1.0;
     let crashed = false;
     const start = Date.now();

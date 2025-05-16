@@ -10,14 +10,14 @@ export default async function handler(req, res) {
   }
 
   // Generate a random crash point (provably fair, simple version)
-  const crashPoint = Math.floor((Math.random() * 100) + 10) / 100; // 1.10x - 2.00x
+  const crashpoint = Math.floor((Math.random() * 100) + 10) / 100; // 1.10x - 2.00x
   const seed = Math.random().toString(36).substring(2);
 
   const { data, error } = await supabase
     .from('crashgame')
     .insert([
       {
-        crashPoint,
+        crashpoint,
         seed,
         status: 'pending',
       },

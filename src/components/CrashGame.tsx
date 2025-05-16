@@ -36,7 +36,6 @@ const CrashGame: React.FC = () => {
   const [isBetting, setIsBetting] = useState(false);
   const [isCashedOut, setIsCashedOut] = useState(false);
   const [error, setError] = useState('');
-  const [bettingCountdown, setBettingCountdown] = useState<number | null>(null);
   const [showCrashEffect, setShowCrashEffect] = useState(false);
 
   // Ably real-time integration
@@ -60,6 +59,14 @@ const CrashGame: React.FC = () => {
       ably.close();
     };
   }, []);
+
+  // Reset multiplier and bet state when a new game starts
+  useEffect(() => {
+    if (!game) return;
+    setMultiplier(1.0);
+    setMyBet(null);
+    setIsCashedOut(false);
+  }, [game?.id]);
 
   // Real-time sync for crash game
   useEffect(() => {
