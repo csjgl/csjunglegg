@@ -19,7 +19,7 @@ export default async function handler(req, res) {
   const { data: user, error: userError } = await supabase
     .from('user')
     .select('balance')
-    .eq('steamid', userId) // lowercase column
+    .eq('id', userId) // use id (UUID)
     .single();
   if (userError || !user) {
     res.status(400).json({ error: 'User not found' });
@@ -34,7 +34,7 @@ export default async function handler(req, res) {
   const { error: updateError } = await supabase
     .from('user')
     .update({ balance: Number(user.balance) - Number(amount) })
-    .eq('steamid', userId); // lowercase column
+    .eq('id', userId); // use id (UUID)
   if (updateError) {
     res.status(500).json({ error: updateError.message });
     return;
