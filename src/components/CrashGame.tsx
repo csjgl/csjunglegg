@@ -186,7 +186,6 @@ const CrashGame: React.FC = () => {
           Place your bets! Round starts in {countdown}s
         </div>
       )}
-      {/* Always show bet input, but disable if not betting window or already bet */}
       <div className="flex items-center space-x-2 mb-4">
         <input
           type="number"
@@ -196,7 +195,7 @@ const CrashGame: React.FC = () => {
           placeholder="Bet amount"
           value={betAmount}
           onChange={e => setBetAmount(e.target.value)}
-          disabled={isBetting || !game || game.status !== 'pending' || !!myBet}
+          disabled={isBetting || !game || game.status !== 'pending'}
         />
         <button
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
@@ -207,7 +206,7 @@ const CrashGame: React.FC = () => {
             }
             handleBet();
           }}
-          disabled={isBetting || !betAmount || !game || game.status !== 'pending' || !!myBet}
+          disabled={isBetting || !betAmount || !game || game.status !== 'pending'}
         >
           Place Bet
         </button>
