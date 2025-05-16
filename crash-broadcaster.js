@@ -2,9 +2,9 @@
 // Crash game backend broadcaster for Ably + Supabase
 // Usage: node crash-broadcaster.js
 
-require('dotenv').config();
-const Ably = require('ably');
-const { createClient } = require('@supabase/supabase-js');
+import 'dotenv/config';
+import Ably from 'ably';
+import { createClient } from '@supabase/supabase-js';
 
 // ENV VARS: VITE_ABLY_PUBLIC_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY
 const ABLY_KEY = process.env.VITE_ABLY_PUBLIC_KEY || process.env.ABLY_API_KEY;
