@@ -147,7 +147,7 @@ const CrashGame: React.FC = () => {
     try {
       // Try to find a pending game or let backend create one
       const res = await axios.post('/api/crash/bet', {
-        userId: (user as any).steamid || user.id || user.steamId,
+        userId: user.id,
         amount: Number(betAmount),
         gameId: game?.id,
       });
