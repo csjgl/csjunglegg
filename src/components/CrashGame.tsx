@@ -25,6 +25,7 @@ interface CrashBetData {
   amount: number;
   cashoutAt?: number;
   createdAt: string;
+  gameId?: string; // add this line
 }
 
 const CrashGame: React.FC = () => {
@@ -129,7 +130,7 @@ const CrashGame: React.FC = () => {
         setIsBetting(false);
         return;
       }
-      setMyBet(res.data.bet);
+      setMyBet({ ...res.data.bet, gameId: game?.id });
     } catch (e: any) {
       setError(e.response?.data?.error || 'Failed to place bet');
     }
@@ -194,7 +195,8 @@ const CrashGame: React.FC = () => {
           Cash Out
         </button>
       )}
-      {myBet && (
+      {/* Only show 'Your bet:' if the bet is for the current game and the game is not pending */}
+      {myBet && game && game.status !== 'pending' && myBet.gameId === game.id && (
         <div className="mb-2">Your bet: <b>{myBet.amount}</b> {isCashedOut && <span className="text-green-600">(Cashed out!)</span>}</div>
       )}
       <div className="mt-6">
