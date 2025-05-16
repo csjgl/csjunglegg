@@ -46,7 +46,13 @@ const CrashGame: React.FC = () => {
     const fetchStatus = async () => {
       try {
         const res = await axios.get('/api/crash/status');
+        if (!res.data.game) {
+          setGame(null);
+          setError('Waiting for first bet to start a new crash game...');
+          return;
+        }
         setGame(res.data.game);
+        setError('');
         // If the game is running, update multiplier
         if (res.data.game.status === 'running' && res.data.game.starttime) {
           lastStart = new Date(res.data.game.starttime).getTime();
