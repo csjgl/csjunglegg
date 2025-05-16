@@ -68,7 +68,7 @@ const CrashGame: React.FC = () => {
         }
         // Find my bet
         if (user && res.data.game.bets) {
-          const found = res.data.game.bets.find((b: CrashBetData) => b.userId === (user as any).steamid);
+          const found = res.data.game.bets.find((b: CrashBetData) => b.userId === user.id);
           setMyBet(found || null);
         }
         // Betting countdown logic (set to 1 second)
@@ -147,7 +147,7 @@ const CrashGame: React.FC = () => {
     try {
       // Try to find a pending game or let backend create one
       const res = await axios.post('/api/crash/bet', {
-        userId: user.id,
+        userId: user.id, // Use id (UUID) everywhere
         amount: Number(betAmount),
         gameId: game?.id,
       });
