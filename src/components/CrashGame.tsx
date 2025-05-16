@@ -63,14 +63,22 @@ const CrashGame: React.FC = () => {
   }, []);
 
   // Reset multiplier and bet state when a new game starts
-  useEffect(() => {
-    if (!game) return;
-    if (game.status === 'pending') {
-      setMultiplier(1.0);
-      setMyBet(null);
-      setIsCashedOut(false);
-    }
-  }, [game?.id, game?.status]);
+  // Reset multiplier and bet state when a new game starts or after a crash
+    useEffect(() => {
+      if (!game) return;
+      if (game.status === 'pending') {
+        setMultiplier(1.0);
+        setMyBet(null);
+        setIsCashedOut(false);
+        setBetAmount(''); // Reset bet input
+      }
+      if (game.status === 'crashed') {
+        // After crash, reset multiplier to 1.0 after the crash effect
+        setTimeout(() => {
+          setMultiplier(1.0);
+        }, 1200); // matches crash effect duration
+      }
+    }, [game?.id, game?.status]);
 
   useEffect(() => {
     if (!game || game.status !== 'pending') {
