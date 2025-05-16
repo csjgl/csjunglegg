@@ -138,26 +138,21 @@ const CrashGame: React.FC = () => {
 
   // Place a bet
   const handleBet = async () => {
-    if (!user || !betAmount || !game?.id) {
-      setError('Missing user, bet amount, or game ID');
+    if (!user || !betAmount) {
+      setError('Missing user or bet amount');
       return;
     }
-    console.log('Placing bet with:', {
-      userId: (user as any)?.steamid,
-      amount: Number(betAmount),
-      gameId: game?.id,
-      userObj: user
-    });
     setIsBetting(true);
     setError('');
     try {
+      // Try to find a pending game or let backend create one
       const res = await axios.post('/api/crash/bet', {
-        userId: (user as any).steamid,
+        userId: (user as any).steamid || user.id || user.steamId,
         amount: Number(betAmount),
-        gameId: game.id,
+        gameId: game?.id,
       });
       if (!res.data.bet) {
-        setError('Bet failed: missing userId, amount, or gameId');
+        setError('Bet failed: missing userId or amount');
         setIsBetting(false);
         return;
       }
