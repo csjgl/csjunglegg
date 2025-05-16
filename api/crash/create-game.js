@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   const seed = Math.random().toString(36).substring(2);
 
   const { data, error } = await supabase
-    .from('CrashGame')
+    .from('crashgame')
     .insert([
       {
         crashPoint,

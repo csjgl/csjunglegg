@@ -14,8 +14,8 @@ function generateCrashPoint() {
 export default async function handler(req, res) {
   // Get the latest crash game
   const { data: games, error: gameError } = await supabase
-    .from('CrashGame')
-    .select('*, bets:CrashBet(*)')
+    .from('crashgame')
+    .select('*, bets:crashbet(*)')
     .order('starttime', { ascending: false })
     .limit(1);
 
@@ -41,7 +41,7 @@ export default async function handler(req, res) {
     const start = new Date(game.starttime).getTime();
     if (now.getTime() - start > 10000) {
       // Set to running
-      await supabase.from('CrashGame').update({ status: 'running' }).eq('id', game.id);
+      await supabase.from('crashgame').update({ status: 'running' }).eq('id', game.id);
       game.status = 'running';
     }
   }
@@ -55,14 +55,14 @@ export default async function handler(req, res) {
     const crashSeconds = Math.log(game.crashpoint) / 0.05;
     if (nowTime - start > crashSeconds * 1000) {
       // Set to crashed
-      await supabase.from('CrashGame').update({ status: 'crashed', endtime: new Date().toISOString() }).eq('id', game.id);
+      await supabase.from('crashgame').update({ status: 'crashed', endtime: new Date().toISOString() }).eq('id', game.id);
       game.status = 'crashed';
       game.endtime = new Date().toISOString();
     }
   }
 
   // Refresh bets for latest state
-  const { data: bets } = await supabase.from('CrashBet').select('*').eq('gameid', game.id);
+  const { data: bets } = await supabase.from('crashbet').select('*').eq('gameid', game.id);
   game.bets = bets || [];
 
   res.status(200).json({ game });

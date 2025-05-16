@@ -10,7 +10,7 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 export default async function handler(req, res) {
   // Get the last 20 crash games
   const { data, error } = await supabase
-    .from('CrashGame')
+    .from('crashgame')
     .select('*')
     .order('starttime', { ascending: false })
     .limit(20);

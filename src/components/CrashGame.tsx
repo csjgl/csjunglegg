@@ -124,7 +124,7 @@ const CrashGame: React.FC = () => {
       .channel('crashgame-changes')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'CrashGame', filter: `id=eq.${game.id}` },
+        { event: '*', schema: 'public', table: 'crashgame', filter: `id=eq.${game.id}` },
         () => {
           // Refetch game status on any change
           axios.get('/api/crash/status').then(res => setGame(res.data.game));

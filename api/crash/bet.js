@@ -46,7 +46,7 @@ export default async function handler(req, res) {
   if (!gameId) {
     // Find or create a pending game
     let { data: pendingGames } = await supabase
-      .from('CrashGame')
+      .from('crashgame')
       .select('*')
       .eq('status', 'pending')
       .order('starttime', { ascending: false })
@@ -57,7 +57,7 @@ export default async function handler(req, res) {
       const crashPoint = Math.floor((Math.random() * 890) + 110) / 100;
       const seed = Math.random().toString(36).substring(2);
       const { data: newGame, error: createError } = await supabase
-        .from('CrashGame')
+        .from('crashgame')
         .insert([
           { crashpoint: crashPoint, seed, status: 'pending', starttime: new Date().toISOString() }
         ])
@@ -74,7 +74,7 @@ export default async function handler(req, res) {
   }
 
   const { data: bet, error: betError } = await supabase
-    .from('CrashBet')
+    .from('crashbet')
     .insert([
       { userid: userId, amount, gameid: gameIdToUse }
     ])

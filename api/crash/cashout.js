@@ -17,7 +17,7 @@ export default async function handler(req, res) {
 
   // Update bet with cashoutAt
   const { data: bet, error: betError } = await supabase
-    .from('CrashBet')
+    .from('crashbet')
     .update({ cashoutAt })
     .eq('id', betId)
     .select()
