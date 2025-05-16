@@ -31,6 +31,7 @@ export default async function handler(req, res) {
   // If no game or last game is crashed and 10s have passed, do NOT auto-start
   if (!game || (game.status === 'crashed' && game.endtime && (now.getTime() - new Date(game.endtime).getTime() > 10000))) {
     // Wait for a bet to be placed to start a new game
+    // But always return a valid game object for frontend polling
     res.status(200).json({ game: null });
     return;
   }
