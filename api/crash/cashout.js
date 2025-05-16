@@ -32,7 +32,7 @@ export default async function handler(req, res) {
 
   // Update user balance
   const { data: user, error: userError } = await supabase
-    .from('User')
+    .from('user')
     .select('balance')
     .eq('id', bet.userId)
     .single();
@@ -41,7 +41,7 @@ export default async function handler(req, res) {
     return;
   }
   const { error: updateError } = await supabase
-    .from('User')
+    .from('user')
     .update({ balance: Number(user.balance) + Number(winnings) })
     .eq('id', bet.userId);
   if (updateError) {

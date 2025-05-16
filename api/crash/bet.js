@@ -17,7 +17,7 @@ export default async function handler(req, res) {
 
   // Check if user has enough balance
   const { data: user, error: userError } = await supabase
-    .from('User')
+    .from('user')
     .select('balance')
     .eq('steamid', userId) // lowercase column
     .single();
@@ -32,7 +32,7 @@ export default async function handler(req, res) {
 
   // Deduct balance
   const { error: updateError } = await supabase
-    .from('User')
+    .from('user')
     .update({ balance: Number(user.balance) - Number(amount) })
     .eq('steamid', userId); // lowercase column
   if (updateError) {
