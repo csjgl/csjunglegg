@@ -27,11 +27,11 @@ export default async function handler(req, res) {
     // Find or create user in DB
     let dbUser;
     try {
-      dbUser = await prisma.user.findUnique({ where: { steamId } });
+      dbUser = await prisma.user.findUnique({ where: { steamid: steamId } }); // lowercase column
       if (!dbUser) {
         dbUser = await prisma.user.create({
           data: {
-            steamId,
+            steamid: steamId, // lowercase column
             name,
             avatar,
             balance: 0,
