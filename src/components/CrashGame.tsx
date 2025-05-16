@@ -181,6 +181,11 @@ const CrashGame: React.FC = () => {
           </span>
         )}
       </div>
+      {game?.status === 'pending' && countdown !== null && (
+        <div className="mb-2 text-center text-blue-700 font-semibold text-lg animate-pulse">
+          Place your bets! Round starts in {countdown}s
+        </div>
+      )}
       {/* Always show bet input, but disable if not betting window or already bet */}
       <div className="flex items-center space-x-2 mb-4">
         <input
