@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useUser } from '../App';
 import { createClient } from '@supabase/supabase-js';
+import Ably from 'ably/promises';
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -38,89 +39,27 @@ const CrashGame: React.FC = () => {
   const [bettingCountdown, setBettingCountdown] = useState<number | null>(null);
   const [showCrashEffect, setShowCrashEffect] = useState(false);
 
-  // Poll for game status every 500ms for more real-time updates
+  // Ably real-time integration
   useEffect(() => {
-    let animationFrame: number;
-    let lastStart: number | null = null;
-    let crashedAt: number | null = null;
+    if (!import.meta.env.VITE_ABLY_PUBLIC_KEY) return;
+    const ably = new Ably.Realtime.Promise(import.meta.env.VITE_ABLY_PUBLIC_KEY);
+    const channel = ably.channels.get('crashgame');
 
-    const fetchStatus = async () => {
-      try {
-        const res = await axios.get('/api/crash/status');
-        if (!res.data.game) {
-          setGame(null);
-          setError('Waiting for first bet to start a new crash game...');
-          return;
-        }
-        setGame(res.data.game);
-        setError('');
-        // If the game is running, update multiplier
-        if (res.data.game.status === 'running' && res.data.game.starttime) {
-          // Always start at 1.00x when running starts
-          if (multiplier !== 1.0) setMultiplier(1.0);
-          lastStart = new Date(res.data.game.starttime).getTime();
-          crashedAt = null;
-        } else if (res.data.game.status === 'crashed' && res.data.game.crashpoint && res.data.game.starttime) {
-          setMultiplier(res.data.game.crashpoint);
-          lastStart = null;
-          crashedAt = new Date(res.data.game.endtime || Date.now()).getTime();
-        } else {
-          setMultiplier(1.0);
-          lastStart = null;
-          crashedAt = null;
-        }
-        // Find my bet
-        if (user && res.data.game.bets) {
-          const found = res.data.game.bets.find((b: CrashBetData) => b.userId === user.id);
-          setMyBet(found || null);
-        }
-        // Betting countdown logic (set to 1 second)
-        if (res.data.game.status === 'pending' && res.data.game.starttime) {
-          const start = new Date(res.data.game.starttime).getTime();
-          const now = Date.now();
-          const secondsLeft = 1 - Math.floor((now - start) / 1000);
-          setBettingCountdown(secondsLeft > 0 ? secondsLeft : 0);
-        } else {
-          setBettingCountdown(null);
-        }
-      } catch (e: any) {
-        setError('Failed to fetch game status');
-      }
-    };
-
-    // Animation loop for real-time multiplier
-    const animate = () => {
-      if (game && game.status === 'running' && game.starttime && !crashedAt) {
-        const start = lastStart || new Date(game.starttime).getTime();
-        const now = Date.now();
-        const seconds = (now - start) / 1000;
-        const crashSeconds = game.crashpoint ? Math.log(game.crashpoint) / 0.05 : 0;
-        if (seconds >= crashSeconds) {
-          // Instantly set to crash value and show crash effect
-          setMultiplier(game.crashpoint || 1.0);
-          setShowCrashEffect(true);
-          setTimeout(() => setShowCrashEffect(false), 1200); // Show effect for 1.2s
-          return;
-        }
-        setMultiplier(Math.max(1, Math.floor((100 * Math.exp(0.05 * seconds))) / 100));
-        animationFrame = requestAnimationFrame(animate);
-      }
-    };
-
-    fetchStatus();
-    const interval = setInterval(fetchStatus, 500); // poll every 500ms
-
-    // Start animation if running
-    if (game && game.status === 'running' && game.starttime) {
-      lastStart = new Date(game.starttime).getTime();
-      animationFrame = requestAnimationFrame(animate);
-    }
-
+    // Listen for multiplier updates
+    channel.subscribe('multiplier', (msg: any) => {
+      setMultiplier(msg.data.multiplier);
+    });
+    // Listen for crash event
+    channel.subscribe('crash', (msg: any) => {
+      setMultiplier(msg.data.crashpoint);
+      setShowCrashEffect(true);
+      setTimeout(() => setShowCrashEffect(false), 1200);
+    });
     return () => {
-      clearInterval(interval);
-      if (animationFrame) cancelAnimationFrame(animationFrame);
+      channel.unsubscribe();
+      ably.close();
     };
-  }, [user, game?.status, game?.starttime, game?.crashpoint, game?.endtime]);
+  }, []);
 
   // Real-time sync for crash game
   useEffect(() => {
