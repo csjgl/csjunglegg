@@ -58,12 +58,20 @@ async function endGame(gameId, crashpoint) {
 
 async function runCrashLoop() {
   while (true) {
-    const crashpoint = randomCrashPoint();
-    const seed = Math.random().toString(36).slice(2);
-    // Create pending game
-    const game = await createGame(seed, crashpoint);
-
-    // Wait for the first bet
+    // Look for a pending game created by a bet
+    let { data: pendingGames } = await supabase
+      .from('crashgame')
+      .select('*')
+      .eq('status', 'pending')
+      .order('starttime', { ascending: false })
+      .limit(1);
+    let game = Array.isArray(pendingGames) ? pendingGames[0] : pendingGames;
+    if (!game) {
+      // No pending game, wait and retry
+      await new Promise(r => setTimeout(r, 1000));
+      continue;
+    }
+    // Wait for the first bet if there are none
     let hasBet = false;
     while (!hasBet) {
       const { data: bets } = await supabase
@@ -73,31 +81,27 @@ async function runCrashLoop() {
       if (bets && bets.length > 0) {
         hasBet = true;
       } else {
-        await new Promise(r => setTimeout(r, 500)); // Poll every 0.5s
+        await new Promise(r => setTimeout(r, 500));
       }
     }
-
     // 10s betting window after first bet
     await new Promise(r => setTimeout(r, 10000));
-
     // Set to running
     await setGameRunning(game.id);
     let multiplier = 1.0;
     let crashed = false;
     const start = Date.now();
-    console.log(`New game: id=${game.id}, crashpoint=${crashpoint}`);
+    console.log(`New game: id=${game.id}, crashpoint=${game.crashpoint}`);
     while (!crashed) {
       const elapsed = Date.now() - start;
       multiplier = Math.floor((Math.exp(GROWTH_RATE * elapsed) * 100)) / 100;
-      if (multiplier >= crashpoint || crashpoint === 0) {
+      if (multiplier >= game.crashpoint || game.crashpoint === 0) {
         crashed = true;
-        multiplier = crashpoint;
-        // Publish crash event
-        ablyChannel.publish('crash', { crashpoint });
-        await endGame(game.id, crashpoint);
-        console.log(`Game crashed at ${crashpoint}x`);
+        multiplier = game.crashpoint;
+        ablyChannel.publish('crash', { crashpoint: game.crashpoint });
+        await endGame(game.id, game.crashpoint);
+        console.log(`Game crashed at ${game.crashpoint}x`);
       } else {
-        // Publish multiplier event
         ablyChannel.publish('multiplier', { multiplier });
         await new Promise(r => setTimeout(r, TICK_MS));
       }
