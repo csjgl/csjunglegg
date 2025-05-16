@@ -36,6 +36,7 @@ const CrashGame: React.FC = () => {
   const [isCashedOut, setIsCashedOut] = useState(false);
   const [error, setError] = useState('');
   const [bettingCountdown, setBettingCountdown] = useState<number | null>(null);
+  const [showCrashEffect, setShowCrashEffect] = useState(false);
 
   // Poll for game status every second
   useEffect(() => {
@@ -93,8 +94,10 @@ const CrashGame: React.FC = () => {
         const seconds = (now - start) / 1000;
         const crashSeconds = game.crashpoint ? Math.log(game.crashpoint) / 0.05 : 0;
         if (seconds >= crashSeconds) {
-          // Instantly set to crash value
+          // Instantly set to crash value and show crash effect
           setMultiplier(game.crashpoint || 1.0);
+          setShowCrashEffect(true);
+          setTimeout(() => setShowCrashEffect(false), 1200); // Show effect for 1.2s
           return;
         }
         setMultiplier(Math.max(1, Math.floor((100 * Math.exp(0.05 * seconds))) / 100));
@@ -182,9 +185,14 @@ const CrashGame: React.FC = () => {
     <div className="max-w-xl mx-auto mt-8 p-6 bg-white rounded shadow">
       <h2 className="text-2xl font-bold mb-4">Crash Game</h2>
       {error && <div className="text-red-500 mb-2">{error}</div>}
-      <div className="mb-4">
+      <div className="mb-4 relative">
         <span className="text-4xl font-mono font-bold text-green-600">{multiplier.toFixed(2)}x</span>
         <span className="ml-2 text-gray-500">{game?.status === 'crashed' ? 'CRASHED' : game?.status?.toUpperCase()}</span>
+        {showCrashEffect && (
+          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-5xl font-extrabold text-red-600 animate-bounce z-10" style={{ pointerEvents: 'none' }}>
+            💥 CRASHED!
+          </span>
+        )}
       </div>
       {/* Show bet input if no game or game is pending, and user is logged in */}
       {user && (!game || game.status === 'pending') && !myBet && (
@@ -210,7 +218,7 @@ const CrashGame: React.FC = () => {
       )}
       {user && myBet && !isCashedOut && game?.status === 'running' && (
         <button
-          className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 mb-4"
+          className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 mb-4 animate-pulse"
           onClick={handleCashout}
         >
           Cash Out
