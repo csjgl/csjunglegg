@@ -1,3 +1,78 @@
 .z-51 {
     z-index: 51;
 }
+
+/* Jungle dark theme inspired by rain.gg */
+body, html {
+  background: linear-gradient(135deg, #0d1f16 0%, #183c2b 100%);
+  color: #e6ffe6;
+  min-height: 100vh;
+}
+
+header, .bg-white, .shadow-md, .rounded, .bg-gray-100 {
+  background: #183c2b !important;
+  color: #e6ffe6 !important;
+  box-shadow: 0 2px 8px 0 rgba(13,31,22,0.2);
+}
+
+nav a, .text-gray-800, .font-bold, .font-medium {
+  color: #b6ffb6 !important;
+}
+
+nav a.active, nav a:hover, .bg-green-600, .hover\:bg-green-700 {
+  background: #2e8b57 !important;
+  color: #fff !important;
+}
+
+input, .border, .rounded {
+  background: #224d36 !important;
+  color: #e6ffe6 !important;
+  border-color: #2e8b57 !important;
+}
+
+button, .bg-blue-600, .bg-yellow-500 {
+  background: #2e8b57 !important;
+  color: #fff !important;
+  border: none;
+}
+
+button:hover, .hover\:bg-blue-700, .hover\:bg-yellow-600 {
+  background: #145c32 !important;
+}
+
+/* Scrollbar styling for jungle feel */
+::-webkit-scrollbar {
+  width: 8px;
+  background: #183c2b;
+}
+::-webkit-scrollbar-thumb {
+  background: #2e8b57;
+  border-radius: 4px;
+}
+
+/* Accent for crash multiplier */
+.text-green-600 {
+  color: #b6ffb6 !important;
+  text-shadow: 0 0 8px #2e8b57;
+}
+
+/* Accent for error */
+.text-red-500 {
+  color: #ff6b6b !important;
+}
+
+/* Accent for bet/cashout */
+.text-yellow-500, .text-yellow-600 {
+  color: #ffe066 !important;
+}
+
+/* Card and modal backgrounds */
+.p-6, .rounded, .shadow {
+  background: #183c2b !important;
+  color: #e6ffe6 !important;
+}
+
+/* Make sure all text is readable */
+* {
+  text-shadow: 0 1px 2px #0d1f16;
+}
