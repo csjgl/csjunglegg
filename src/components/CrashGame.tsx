@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useUser } from '../App';
 import { createClient } from '@supabase/supabase-js';
-import Ably from 'ably/promises';
+import Ably from 'ably';
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -42,7 +42,7 @@ const CrashGame: React.FC = () => {
   // Ably real-time integration
   useEffect(() => {
     if (!import.meta.env.VITE_ABLY_PUBLIC_KEY) return;
-    const ably = new Ably.Realtime.Promise(import.meta.env.VITE_ABLY_PUBLIC_KEY);
+    const ably = new Ably.Realtime(import.meta.env.VITE_ABLY_PUBLIC_KEY);
     const channel = ably.channels.get('crashgame');
 
     // Listen for multiplier updates
