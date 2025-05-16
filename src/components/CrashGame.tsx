@@ -37,6 +37,7 @@ const CrashGame: React.FC = () => {
   const [isCashedOut, setIsCashedOut] = useState(false);
   const [error, setError] = useState('');
   const [showCrashEffect, setShowCrashEffect] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
 
   // Ably real-time integration
   useEffect(() => {
@@ -63,10 +64,31 @@ const CrashGame: React.FC = () => {
   // Reset multiplier and bet state when a new game starts
   useEffect(() => {
     if (!game) return;
-    setMultiplier(1.0);
-    setMyBet(null);
-    setIsCashedOut(false);
-  }, [game?.id]);
+    if (game.status === 'pending') {
+      setMultiplier(1.0);
+      setMyBet(null);
+      setIsCashedOut(false);
+    }
+  }, [game?.id, game?.status]);
+
+  useEffect(() => {
+    if (!game || game.status !== 'pending') {
+      setCountdown(null);
+      return;
+    }
+    setCountdown(10);
+    const interval = setInterval(() => {
+      setCountdown(prev => {
+        if (prev === null) return null;
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [game?.id, game?.status]);
 
   // Real-time sync for crash game
   useEffect(() => {
