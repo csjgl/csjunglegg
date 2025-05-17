@@ -87,19 +87,24 @@ const CrashGame: React.FC = () => {
       setCountdown(null);
       return;
     }
-    setCountdown(10);
+    // Calculate how many seconds left in the betting window
+    const start = new Date(game.starttime).getTime();
+    const now = Date.now();
+    const BETTING_WINDOW = 15; // seconds
+    let secondsLeft = BETTING_WINDOW - Math.floor((now - start) / 1000);
+    if (secondsLeft < 0) secondsLeft = 0;
+    setCountdown(secondsLeft);
     const interval = setInterval(() => {
-      setCountdown(prev => {
-        if (prev === null) return null;
-        if (prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
+      const now2 = Date.now();
+      let left = BETTING_WINDOW - Math.floor((now2 - start) / 1000);
+      if (left < 0) left = 0;
+      setCountdown(left);
+      if (left <= 0) {
+        clearInterval(interval);
+      }
     }, 1000);
     return () => clearInterval(interval);
-  }, [game?.id, game?.status]);
+  }, [game?.id, game?.status, game?.starttime]);
 
   // Real-time sync for crash game
   useEffect(() => {
