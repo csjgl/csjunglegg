@@ -82,8 +82,15 @@ async function runCrashLoop() {
     }
     // Wait for the betting window (15s)
     await new Promise(r => setTimeout(r, BETTING_WINDOW_MS));
-    // Set to running
+    // Set to running and refetch the game object
     await setGameRunning(game.id);
+    // Refetch the updated game object to ensure status is 'running'
+    let { data: runningGame } = await supabase
+      .from('crashgame')
+      .select('*')
+      .eq('id', game.id)
+      .single();
+    if (runningGame) game = runningGame;
     let multiplier = 1.0;
     let crashed = false;
     const start = Date.now();
@@ -104,16 +111,16 @@ async function runCrashLoop() {
           .eq('id', game.id);
         ablyChannel.publish('paused', { gameId: game.id });
         await new Promise(r => setTimeout(r, 2000)); // 2s pause
+        // Now create a new pending game for the next round (starttime will be correct)
+        const crashpoint = randomCrashPoint();
+        const seed = Math.random().toString(36).slice(2);
+        const newGame = await createGame(seed, crashpoint);
+        ablyChannel.publish('pending', { gameId: newGame.id });
       } else {
         ablyChannel.publish('multiplier', { multiplier });
         await new Promise(r => setTimeout(r, TICK_MS));
       }
     }
-    // Immediately create a new pending game for the next round (no extra wait)
-    const crashpoint = randomCrashPoint();
-    const seed = Math.random().toString(36).slice(2);
-    const newGame = await createGame(seed, crashpoint);
-    ablyChannel.publish('pending', { gameId: newGame.id });
   }
 }
 
