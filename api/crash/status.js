@@ -75,36 +75,6 @@ export default async function handler(req, res) {
     .limit(1);
   if (Array.isArray(latestGames) && latestGames[0]) game = latestGames[0];
 
-  // Only transition the latest game
-  if (game.status === 'pending') {
-    const start = new Date(game.starttime).getTime();
-    if (now.getTime() - start > 15000) {
-      await supabase.from('crashgame').update({ status: 'running' }).eq('id', game.id);
-      // Refetch latest game after status change
-      let { data: latestGames2 } = await supabase
-        .from('crashgame')
-        .select('*, bets:crashbet(*)')
-        .order('starttime', { ascending: false })
-        .limit(1);
-      if (Array.isArray(latestGames2) && latestGames2[0]) game = latestGames2[0];
-    }
-  }
-  if (game.status === 'running') {
-    const start = new Date(game.starttime).getTime();
-    const nowTime = now.getTime();
-    const crashSeconds = Math.log(game.crashpoint) / 0.05;
-    if (nowTime - start > crashSeconds * 1000) {
-      await supabase.from('crashgame').update({ status: 'crashed', endtime: new Date().toISOString() }).eq('id', game.id);
-      // Refetch latest game after status change
-      let { data: latestGames2 } = await supabase
-        .from('crashgame')
-        .select('*, bets:crashbet(*)')
-        .order('starttime', { ascending: false })
-        .limit(1);
-      if (Array.isArray(latestGames2) && latestGames2[0]) game = latestGames2[0];
-    }
-  }
-
   // If the latest game is paused, return it as the current game
   if (game && game.status === 'paused') {
     const { data: bets } = await supabase.from('crashbet').select('*').eq('gameid', game.id);
