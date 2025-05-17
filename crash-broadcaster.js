@@ -71,7 +71,8 @@ async function runCrashLoop() {
     // Now create a new pending game for the next round (starttime will be correct)
     const crashpoint = randomCrashPoint();
     const seed = Math.random().toString(36).slice(2);
-    const starttime = new Date().toISOString(); // Betting window starts now
+    // Set starttime slightly in the future to ensure frontend always gets a full 15s countdown
+    const starttime = new Date(Date.now() + 1000).toISOString(); // 1s in the future
     let game = await createGame(seed, crashpoint, starttime); // pass starttime explicitly
     ablyChannel.publish('pending', { gameId: game.id });
     await new Promise(r => setTimeout(r, BETTING_WINDOW_MS));
@@ -102,10 +103,18 @@ async function runCrashLoop() {
       }
     }
     // After crash, set to paused for 2 seconds before next round
-    await supabase
+    // Only update to paused if the game is still running, not if it's already crashed
+    const { data: latestGame } = await supabase
       .from('crashgame')
-      .update({ status: 'paused' })
-      .eq('id', game.id);
+      .select('status')
+      .eq('id', game.id)
+      .single();
+    if (latestGame && latestGame.status !== 'crashed') {
+      await supabase
+        .from('crashgame')
+        .update({ status: 'paused' })
+        .eq('id', game.id);
+    }
     ablyChannel.publish('paused', { gameId: game.id });
     // Loop will pause again at the top
   }
