@@ -58,6 +58,15 @@ export default async function handler(req, res) {
     }
   }
 
+  // Always transition from 'pending' to 'running' after 15 seconds
+  if (game.status === 'pending') {
+    const start = new Date(game.starttime).getTime();
+    if (now.getTime() - start > 15000) { // 15 seconds
+      await supabase.from('crashgame').update({ status: 'running' }).eq('id', game.id);
+      game.status = 'running';
+    }
+  }
+
   // If game is running, check if it should crash
   if (game.status === 'running') {
     const start = new Date(game.starttime).getTime();
