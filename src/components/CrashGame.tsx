@@ -103,6 +103,8 @@ const CrashGame: React.FC = () => {
       let left = BETTING_WINDOW - Math.ceil((now - start) / 1000);
       return left > 0 ? left : 0;
     }
+    // Debug: print starttime and now
+    console.log('[DEBUG] starttime:', game.starttime, 'local now:', new Date().toISOString(), 'diff:', (Date.now() - start) / 1000, 's');
     setCountdown(getSecondsLeft());
     const interval = setInterval(() => {
       setCountdown(getSecondsLeft());
