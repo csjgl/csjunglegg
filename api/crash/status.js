@@ -27,8 +27,8 @@ export default async function handler(req, res) {
   let game = Array.isArray(games) ? games[0] : games;
   const now = new Date();
 
-  // If no game or last game is crashed and 10s have passed, create a new pending game
-  if (!game || (game.status === 'crashed' && game.endtime && (now.getTime() - new Date(game.endtime).getTime() > 10000))) {
+  // If no game or last game is crashed and 2s have passed, create a new pending game
+  if (!game || (game.status === 'crashed' && game.endtime && (now.getTime() - new Date(game.endtime).getTime() > 2000))) {
     // Create a new pending game
     const crashpoint = generateCrashPoint();
     const seed = Math.random().toString(36).slice(2);
@@ -80,12 +80,13 @@ export default async function handler(req, res) {
     const start = new Date(game.starttime).getTime();
     if (now.getTime() - start > 15000) {
       await supabase.from('crashgame').update({ status: 'running' }).eq('id', game.id);
-      const { data: updatedGame } = await supabase
+      // Refetch latest game after status change
+      let { data: latestGames2 } = await supabase
         .from('crashgame')
         .select('*, bets:crashbet(*)')
-        .eq('id', game.id)
-        .single();
-      if (updatedGame) game = updatedGame;
+        .order('starttime', { ascending: false })
+        .limit(1);
+      if (Array.isArray(latestGames2) && latestGames2[0]) game = latestGames2[0];
     }
   }
   if (game.status === 'running') {
@@ -94,8 +95,13 @@ export default async function handler(req, res) {
     const crashSeconds = Math.log(game.crashpoint) / 0.05;
     if (nowTime - start > crashSeconds * 1000) {
       await supabase.from('crashgame').update({ status: 'crashed', endtime: new Date().toISOString() }).eq('id', game.id);
-      game.status = 'crashed';
-      game.endtime = new Date().toISOString();
+      // Refetch latest game after status change
+      let { data: latestGames2 } = await supabase
+        .from('crashgame')
+        .select('*, bets:crashbet(*)')
+        .order('starttime', { ascending: false })
+        .limit(1);
+      if (Array.isArray(latestGames2) && latestGames2[0]) game = latestGames2[0];
     }
   }
 
