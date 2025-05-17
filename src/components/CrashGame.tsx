@@ -187,7 +187,7 @@ const CrashGame: React.FC = () => {
           </span>
         )}
         {/* Show countdown during betting window */}
-        {game?.status === 'pending' && countdown !== null && countdown > 0 && (
+        {game?.status === 'pending' && countdown !== null && (
           <span className="absolute right-0 top-0 text-lg font-bold text-blue-600 bg-white bg-opacity-80 px-2 py-1 rounded shadow">
             Betting ends in: {countdown}s
           </span>
@@ -195,7 +195,11 @@ const CrashGame: React.FC = () => {
       </div>
       {game?.status === 'pending' && countdown !== null && (
         <div className="mb-2 text-center text-blue-700 font-semibold text-lg animate-pulse">
-          Place your bets! Round starts in {countdown}s
+          {countdown > 0 ? (
+            <>Place your bets! Round starts in {countdown}s</>
+          ) : (
+            <>Betting closed. Waiting for round to start...</>
+          )}
         </div>
       )}
       <div className="flex items-center space-x-2 mb-4">

@@ -49,15 +49,6 @@ export default async function handler(req, res) {
     game = newGame;
   }
 
-  // If game is pending and more than 10s have passed since start, set to running
-  if (game.status === 'pending' && game.bets && game.bets.length > 0) {
-    const start = new Date(game.starttime).getTime();
-    if (now.getTime() - start > 10000) {
-      await supabase.from('crashgame').update({ status: 'running' }).eq('id', game.id);
-      game.status = 'running';
-    }
-  }
-
   // Always transition from 'pending' to 'running' after 15 seconds
   if (game.status === 'pending') {
     const start = new Date(game.starttime).getTime();
