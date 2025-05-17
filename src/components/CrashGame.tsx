@@ -62,6 +62,14 @@ const CrashGame: React.FC = () => {
         setDisplayedMultiplier(1.0); // Reset display to 1.00x after crash effect
       }, 1200);
     });
+    // Listen for paused event
+    channel.subscribe('paused', () => {
+      axios.get('/api/crash/status').then(res => setGame(res.data.game));
+    });
+    // Listen for pending/newgame event
+    channel.subscribe('pending', () => {
+      axios.get('/api/crash/status').then(res => setGame(res.data.game));
+    });
     return () => {
       channel.unsubscribe();
       ably.close();

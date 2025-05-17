@@ -112,7 +112,8 @@ async function runCrashLoop() {
     // Immediately create a new pending game for the next round (no extra wait)
     const crashpoint = randomCrashPoint();
     const seed = Math.random().toString(36).slice(2);
-    await createGame(seed, crashpoint);
+    const newGame = await createGame(seed, crashpoint);
+    ablyChannel.publish('pending', { gameId: newGame.id });
   }
 }
 
