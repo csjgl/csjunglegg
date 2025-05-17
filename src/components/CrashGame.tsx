@@ -125,6 +125,11 @@ const CrashGame: React.FC = () => {
     };
   }, [game?.id]);
 
+  // Initial fetch of game state on mount
+  useEffect(() => {
+    axios.get('/api/crash/status').then(res => setGame(res.data.game));
+  }, []);
+
   // Place a bet
   const handleBet = async () => {
     if (!user || !betAmount) {
