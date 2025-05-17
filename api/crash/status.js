@@ -49,7 +49,7 @@ export default async function handler(req, res) {
     game = newGame;
   }
 
-  // If there are multiple pending games, expire all but the latest
+  // Always expire all but the latest pending game
   if (game && game.status === 'pending') {
     let { data: allPending } = await supabase
       .from('crashgame')
@@ -67,49 +67,40 @@ export default async function handler(req, res) {
     }
   }
 
-  // Always transition from 'pending' to 'running' after 15 seconds, but only for the latest pending game
+  // Always operate on the latest game by starttime
+  let { data: latestGames } = await supabase
+    .from('crashgame')
+    .select('*, bets:crashbet(*)')
+    .order('starttime', { ascending: false })
+    .limit(1);
+  if (Array.isArray(latestGames) && latestGames[0]) game = latestGames[0];
+
+  // Only transition the latest game
   if (game.status === 'pending') {
-    let { data: allGames } = await supabase
-      .from('crashgame')
-      .select('id, starttime, status')
-      .order('starttime', { ascending: false });
-    const isLatest = !allGames || allGames.length === 0 || allGames[0].id === game.id;
-    if (isLatest) {
-      const start = new Date(game.starttime).getTime();
-      if (now.getTime() - start > 15000) { // 15 seconds
-        await supabase.from('crashgame').update({ status: 'running' }).eq('id', game.id);
-        const { data: updatedGame } = await supabase
-          .from('crashgame')
-          .select('*, bets:crashbet(*)')
-          .eq('id', game.id)
-          .single();
-        if (updatedGame) game = updatedGame;
-      }
+    const start = new Date(game.starttime).getTime();
+    if (now.getTime() - start > 15000) {
+      await supabase.from('crashgame').update({ status: 'running' }).eq('id', game.id);
+      const { data: updatedGame } = await supabase
+        .from('crashgame')
+        .select('*, bets:crashbet(*)')
+        .eq('id', game.id)
+        .single();
+      if (updatedGame) game = updatedGame;
     }
   }
-
-  // Only transition from 'running' to 'crashed' if this is the latest game
   if (game.status === 'running') {
-    let { data: allGames } = await supabase
-      .from('crashgame')
-      .select('id, starttime, status')
-      .order('starttime', { ascending: false });
-    const isLatest = !allGames || allGames.length === 0 || allGames[0].id === game.id;
-    if (isLatest) {
-      const start = new Date(game.starttime).getTime();
-      const nowTime = now.getTime();
-      const crashSeconds = Math.log(game.crashpoint) / 0.05;
-      if (nowTime - start > crashSeconds * 1000) {
-        await supabase.from('crashgame').update({ status: 'crashed', endtime: new Date().toISOString() }).eq('id', game.id);
-        game.status = 'crashed';
-        game.endtime = new Date().toISOString();
-      }
+    const start = new Date(game.starttime).getTime();
+    const nowTime = now.getTime();
+    const crashSeconds = Math.log(game.crashpoint) / 0.05;
+    if (nowTime - start > crashSeconds * 1000) {
+      await supabase.from('crashgame').update({ status: 'crashed', endtime: new Date().toISOString() }).eq('id', game.id);
+      game.status = 'crashed';
+      game.endtime = new Date().toISOString();
     }
   }
 
   // If the latest game is paused, return it as the current game
   if (game && game.status === 'paused') {
-    // Optionally, you could check how long it's been paused and allow transition if >2s, but the broadcaster handles this
     const { data: bets } = await supabase.from('crashbet').select('*').eq('gameid', game.id);
     game.bets = bets || [];
     res.status(200).json({ game });
@@ -119,14 +110,6 @@ export default async function handler(req, res) {
   // Refresh bets for latest state
   const { data: bets } = await supabase.from('crashbet').select('*').eq('gameid', game.id);
   game.bets = bets || [];
-
-  // Always return the latest game (by starttime), regardless of status
-  let { data: latestGames } = await supabase
-    .from('crashgame')
-    .select('*, bets:crashbet(*)')
-    .order('starttime', { ascending: false })
-    .limit(1);
-  if (Array.isArray(latestGames) && latestGames[0]) game = latestGames[0];
 
   res.status(200).json({ game });
 }
