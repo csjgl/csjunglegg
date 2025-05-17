@@ -49,6 +49,24 @@ export default async function handler(req, res) {
     game = newGame;
   }
 
+  // If there are multiple pending games, expire all but the latest
+  if (game && game.status === 'pending') {
+    let { data: allPending } = await supabase
+      .from('crashgame')
+      .select('id, starttime')
+      .eq('status', 'pending')
+      .order('starttime', { ascending: false });
+    if (Array.isArray(allPending) && allPending.length > 1) {
+      const idsToExpire = allPending.slice(1).map(g => g.id);
+      if (idsToExpire.length > 0) {
+        await supabase
+          .from('crashgame')
+          .update({ status: 'expired' })
+          .in('id', idsToExpire);
+      }
+    }
+  }
+
   // Always transition from 'pending' to 'running' after 15 seconds
   if (game.status === 'pending') {
     const start = new Date(game.starttime).getTime();

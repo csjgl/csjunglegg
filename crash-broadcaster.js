@@ -106,23 +106,24 @@ async function runCrashLoop() {
         await endGame(game.id, game.crashpoint);
         ablyChannel.publish('crash', { crashpoint: game.crashpoint });
         console.log(`Game crashed at ${game.crashpoint}x`);
-        // Set to paused for 2 seconds before next round
-        await supabase
-          .from('crashgame')
-          .update({ status: 'paused' })
-          .eq('id', game.id);
-        ablyChannel.publish('paused', { gameId: game.id });
-        await new Promise(r => setTimeout(r, 2000)); // 2s pause
-        // Now create a new pending game for the next round (starttime will be correct)
-        const crashpoint = randomCrashPoint();
-        const seed = Math.random().toString(36).slice(2);
-        const newGame = await createGame(seed, crashpoint);
-        ablyChannel.publish('pending', { gameId: newGame.id });
       } else {
         ablyChannel.publish('multiplier', { multiplier });
         await new Promise(r => setTimeout(r, TICK_MS));
       }
     }
+    // After crash, set to paused for 2 seconds before next round
+    await supabase
+      .from('crashgame')
+      .update({ status: 'paused' })
+      .eq('id', game.id);
+    ablyChannel.publish('paused', { gameId: game.id });
+    await new Promise(r => setTimeout(r, 2000)); // 2s pause
+    // Now create a new pending game for the next round (starttime will be correct)
+    const crashpoint = randomCrashPoint();
+    const seed = Math.random().toString(36).slice(2);
+    const newGame = await createGame(seed, crashpoint);
+    ablyChannel.publish('pending', { gameId: newGame.id });
+    // Continue to next loop iteration for the new game
   }
 }
 
