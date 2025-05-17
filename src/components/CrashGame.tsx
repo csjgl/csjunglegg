@@ -172,6 +172,20 @@ const CrashGame: React.FC = () => {
     }
   };
 
+  // After a crash, poll for a new pending game every 2s until found
+  useEffect(() => {
+    if (game?.status === 'crashed') {
+      const interval = setInterval(() => {
+        axios.get('/api/crash/status').then(res => {
+          if (res.data.game?.status === 'pending') {
+            setGame(res.data.game);
+          }
+        });
+      }, 2000);
+      return () => clearInterval(interval);
+    }
+  }, [game?.status]);
+
   // Debug logs for troubleshooting
   useEffect(() => {
     console.log('[DEBUG] game:', game);
