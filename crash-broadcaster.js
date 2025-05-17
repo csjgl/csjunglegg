@@ -22,6 +22,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 const TICK_MS = 100; // Multiplier update interval
 const ROUND_WAIT_MS = 5000; // Wait before new round
 const GROWTH_RATE = 0.00006; // Controls multiplier curve
+const BETTING_WINDOW_MS = 15000; // 15 seconds betting window
 
 function randomCrashPoint() {
   // Provably fair: 1/(1-X) where X is random [0,1)
@@ -65,22 +66,22 @@ async function setGameRunning(gameId) {
 
 async function runCrashLoop() {
   while (true) {
-  // Look for a pending game, or create one if none exists
-  let { data: pendingGames } = await supabase
-    .from('crashgame')
-    .select('*')
-    .eq('status', 'pending')
-    .order('starttime', { ascending: false })
-    .limit(1);
-  let game = Array.isArray(pendingGames) ? pendingGames[0] : pendingGames;
-  if (!game) {
-    // No pending game, create one
-    const crashpoint = randomCrashPoint();
-    const seed = Math.random().toString(36).slice(2);
-    game = await createGame(seed, crashpoint);
-  }
-  // Always start a 10s betting window, even if no bets are placed
-  await new Promise(r => setTimeout(r, 10000));
+    // Look for a pending game, or create one if none exists
+    let { data: pendingGames } = await supabase
+      .from('crashgame')
+      .select('*')
+      .eq('status', 'pending')
+      .order('starttime', { ascending: false })
+      .limit(1);
+    let game = Array.isArray(pendingGames) ? pendingGames[0] : pendingGames;
+    if (!game) {
+      // No pending game, create one
+      const crashpoint = randomCrashPoint();
+      const seed = Math.random().toString(36).slice(2);
+      game = await createGame(seed, crashpoint);
+    }
+    // Wait for the betting window (15s)
+    await new Promise(r => setTimeout(r, BETTING_WINDOW_MS));
     // Set to running
     await setGameRunning(game.id);
     let multiplier = 1.0;
@@ -101,10 +102,7 @@ async function runCrashLoop() {
         await new Promise(r => setTimeout(r, TICK_MS));
       }
     }
-    // Wait before next round
-    // Wait 2 seconds before starting the next betting phase
-    await new Promise(r => setTimeout(r, 2000));
-    // Immediately create a new pending game for the next round
+    // Immediately create a new pending game for the next round (no extra wait)
     const crashpoint = randomCrashPoint();
     const seed = Math.random().toString(36).slice(2);
     await createGame(seed, crashpoint);
