@@ -97,6 +97,13 @@ async function runCrashLoop() {
         ablyChannel.publish('crash', { crashpoint: game.crashpoint });
         await endGame(game.id, game.crashpoint);
         console.log(`Game crashed at ${game.crashpoint}x`);
+        // Set to paused for 2 seconds before next round
+        await supabase
+          .from('crashgame')
+          .update({ status: 'paused' })
+          .eq('id', game.id);
+        ablyChannel.publish('paused', { gameId: game.id });
+        await new Promise(r => setTimeout(r, 2000)); // 2s pause
       } else {
         ablyChannel.publish('multiplier', { multiplier });
         await new Promise(r => setTimeout(r, TICK_MS));

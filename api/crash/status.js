@@ -77,6 +77,15 @@ export default async function handler(req, res) {
     }
   }
 
+  // If the latest game is paused, return it as the current game
+  if (game && game.status === 'paused') {
+    // Optionally, you could check how long it's been paused and allow transition if >2s, but the broadcaster handles this
+    const { data: bets } = await supabase.from('crashbet').select('*').eq('gameid', game.id);
+    game.bets = bets || [];
+    res.status(200).json({ game });
+    return;
+  }
+
   // Refresh bets for latest state
   const { data: bets } = await supabase.from('crashbet').select('*').eq('gameid', game.id);
   game.bets = bets || [];

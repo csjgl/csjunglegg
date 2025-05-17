@@ -222,13 +222,23 @@ const CrashGame: React.FC = () => {
             💥 CRASHED!
           </span>
         )}
-        {/* Show countdown during betting window */}
+        {/* Show countdown during betting window or paused state */}
         {game?.status === 'pending' && countdown !== null && (
           <span className="absolute right-0 top-0 text-lg font-bold text-blue-600 bg-white bg-opacity-80 px-2 py-1 rounded shadow">
             Betting ends in: {countdown}s
           </span>
         )}
+        {game?.status === 'paused' && (
+          <span className="absolute right-0 top-0 text-lg font-bold text-gray-500 bg-white bg-opacity-80 px-2 py-1 rounded shadow">
+            Next round in 2s...
+          </span>
+        )}
       </div>
+      {game?.status === 'paused' && (
+        <div className="mb-2 text-center text-gray-500 font-semibold text-lg animate-pulse">
+          Paused... Next round starting soon!
+        </div>
+      )}
       {game?.status === 'pending' && countdown !== null && (
         <div className="mb-2 text-center text-blue-700 font-semibold text-lg animate-pulse">
           {countdown > 0 ? (
