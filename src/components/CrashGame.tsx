@@ -95,21 +95,17 @@ const CrashGame: React.FC = () => {
       setCountdown(null);
       return;
     }
-    // Calculate how many seconds left in the betting window
-    const start = new Date(game.starttime).getTime();
-    const now = Date.now();
+    // Always recalculate from the latest starttime
     const BETTING_WINDOW = 15; // seconds
-    let secondsLeft = BETTING_WINDOW - Math.floor((now - start) / 1000);
-    if (secondsLeft < 0) secondsLeft = 0;
-    setCountdown(secondsLeft);
+    const start = new Date(game.starttime).getTime();
+    function getSecondsLeft() {
+      const now = Date.now();
+      let left = BETTING_WINDOW - Math.floor((now - start) / 1000);
+      return left > 0 ? left : 0;
+    }
+    setCountdown(getSecondsLeft());
     const interval = setInterval(() => {
-      const now2 = Date.now();
-      let left = BETTING_WINDOW - Math.floor((now2 - start) / 1000);
-      if (left < 0) left = 0;
-      setCountdown(left);
-      if (left <= 0) {
-        clearInterval(interval);
-      }
+      setCountdown(getSecondsLeft());
     }, 1000);
     return () => clearInterval(interval);
   }, [game?.id, game?.status, game?.starttime]);
