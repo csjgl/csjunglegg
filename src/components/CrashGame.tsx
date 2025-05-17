@@ -186,6 +186,18 @@ const CrashGame: React.FC = () => {
     }
   }, [game?.status]);
 
+  // Poll for game status if betting is closed but round hasn't started
+  useEffect(() => {
+    if (game?.status === 'pending' && countdown === 0) {
+      const interval = setInterval(() => {
+        axios.get('/api/crash/status').then(res => {
+          if (res.data.game) setGame(res.data.game);
+        });
+      }, 2000);
+      return () => clearInterval(interval);
+    }
+  }, [game?.status, countdown]);
+
   // Debug logs for troubleshooting
   useEffect(() => {
     console.log('[DEBUG] game:', game);
