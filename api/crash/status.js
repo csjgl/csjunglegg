@@ -13,7 +13,7 @@ function generateCrashPoint() {
 
 export default async function handler(req, res) {
   // Get the latest crash game
-  const { data: games, error: gameError } = await supabase
+  let { data: games, error: gameError } = await supabase
     .from('crashgame')
     .select('*, bets:crashbet(*)')
     .order('starttime', { ascending: false })
@@ -27,20 +27,32 @@ export default async function handler(req, res) {
   let game = Array.isArray(games) ? games[0] : games;
   const now = new Date();
 
-  // Only start a new game if there is at least one bet placed
-  // If no game or last game is crashed and 10s have passed, do NOT auto-start
+  // If no game or last game is crashed and 10s have passed, create a new pending game
   if (!game || (game.status === 'crashed' && game.endtime && (now.getTime() - new Date(game.endtime).getTime() > 10000))) {
-    // Wait for a bet to be placed to start a new game
-    // But always return a valid game object for frontend polling
-    res.status(200).json({ game: null });
-    return;
+    // Create a new pending game
+    const crashpoint = generateCrashPoint();
+    const seed = Math.random().toString(36).slice(2);
+    const { data: newGame, error: createError } = await supabase
+      .from('crashgame')
+      .insert({
+        starttime: new Date().toISOString(),
+        seed,
+        status: 'pending',
+        crashpoint
+      })
+      .select('*, bets:crashbet(*)')
+      .single();
+    if (createError) {
+      res.status(500).json({ error: createError.message });
+      return;
+    }
+    game = newGame;
   }
 
   // If game is pending and more than 10s have passed since start, set to running
   if (game.status === 'pending' && game.bets && game.bets.length > 0) {
     const start = new Date(game.starttime).getTime();
     if (now.getTime() - start > 10000) {
-      // Set to running
       await supabase.from('crashgame').update({ status: 'running' }).eq('id', game.id);
       game.status = 'running';
     }
@@ -50,11 +62,8 @@ export default async function handler(req, res) {
   if (game.status === 'running') {
     const start = new Date(game.starttime).getTime();
     const nowTime = now.getTime();
-    // Calculate when the crash should happen
-    // For demo: 1x = 0s, 2x = ~14s, 10x = ~46s (using ln(crashPoint)/0.05)
     const crashSeconds = Math.log(game.crashpoint) / 0.05;
     if (nowTime - start > crashSeconds * 1000) {
-      // Set to crashed
       await supabase.from('crashgame').update({ status: 'crashed', endtime: new Date().toISOString() }).eq('id', game.id);
       game.status = 'crashed';
       game.endtime = new Date().toISOString();
