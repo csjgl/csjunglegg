@@ -53,8 +53,15 @@ export default async function handler(req, res) {
   if (game.status === 'pending') {
     const start = new Date(game.starttime).getTime();
     if (now.getTime() - start > 15000) { // 15 seconds
+      // Update status in DB
       await supabase.from('crashgame').update({ status: 'running' }).eq('id', game.id);
-      game.status = 'running';
+      // Refetch the updated game so the frontend sees status 'running' and multiplier can start
+      const { data: updatedGame } = await supabase
+        .from('crashgame')
+        .select('*, bets:crashbet(*)')
+        .eq('id', game.id)
+        .single();
+      if (updatedGame) game = updatedGame;
     }
   }
 
