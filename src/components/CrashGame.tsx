@@ -100,7 +100,7 @@ const CrashGame: React.FC = () => {
     const start = new Date(game.starttime).getTime();
     function getSecondsLeft() {
       const now = Date.now();
-      let left = BETTING_WINDOW - Math.floor((now - start) / 1000);
+      let left = BETTING_WINDOW - Math.ceil((now - start) / 1000);
       return left > 0 ? left : 0;
     }
     setCountdown(getSecondsLeft());
