@@ -84,6 +84,7 @@ async function runCrashLoop() {
     await new Promise(r => setTimeout(r, BETTING_WINDOW_MS));
     // Set to running and refetch the game object
     await setGameRunning(game.id);
+    ablyChannel.publish('running', { gameId: game.id }); // Notify frontend instantly
     // Refetch the updated game object to ensure status is 'running'
     let { data: runningGame } = await supabase
       .from('crashgame')
@@ -101,8 +102,9 @@ async function runCrashLoop() {
       if (multiplier >= game.crashpoint || game.crashpoint === 0) {
         crashed = true;
         multiplier = game.crashpoint;
-        ablyChannel.publish('crash', { crashpoint: game.crashpoint });
+        // Only now broadcast crash!
         await endGame(game.id, game.crashpoint);
+        ablyChannel.publish('crash', { crashpoint: game.crashpoint });
         console.log(`Game crashed at ${game.crashpoint}x`);
         // Set to paused for 2 seconds before next round
         await supabase
