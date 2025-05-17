@@ -67,19 +67,28 @@ export default async function handler(req, res) {
     }
   }
 
-  // Always transition from 'pending' to 'running' after 15 seconds
+  // Always transition from 'pending' to 'running' after 15 seconds, but only for the latest pending game
   if (game.status === 'pending') {
-    const start = new Date(game.starttime).getTime();
-    if (now.getTime() - start > 15000) { // 15 seconds
-      // Update status in DB
-      await supabase.from('crashgame').update({ status: 'running' }).eq('id', game.id);
-      // Refetch the updated game so the frontend sees status 'running' and multiplier can start
-      const { data: updatedGame } = await supabase
-        .from('crashgame')
-        .select('*, bets:crashbet(*)')
-        .eq('id', game.id)
-        .single();
-      if (updatedGame) game = updatedGame;
+    // Check if this is the latest pending game
+    let { data: allPending } = await supabase
+      .from('crashgame')
+      .select('id, starttime')
+      .eq('status', 'pending')
+      .order('starttime', { ascending: false });
+    const isLatest = !allPending || allPending.length === 0 || allPending[0].id === game.id;
+    if (isLatest) {
+      const start = new Date(game.starttime).getTime();
+      if (now.getTime() - start > 15000) { // 15 seconds
+        // Update status in DB
+        await supabase.from('crashgame').update({ status: 'running' }).eq('id', game.id);
+        // Refetch the updated game so the frontend sees status 'running' and multiplier can start
+        const { data: updatedGame } = await supabase
+          .from('crashgame')
+          .select('*, bets:crashbet(*)')
+          .eq('id', game.id)
+          .single();
+        if (updatedGame) game = updatedGame;
+      }
     }
   }
 
@@ -107,6 +116,14 @@ export default async function handler(req, res) {
   // Refresh bets for latest state
   const { data: bets } = await supabase.from('crashbet').select('*').eq('gameid', game.id);
   game.bets = bets || [];
+
+  // Always return the latest game (by starttime), regardless of status
+  let { data: latestGames } = await supabase
+    .from('crashgame')
+    .select('*, bets:crashbet(*)')
+    .order('starttime', { ascending: false })
+    .limit(1);
+  if (Array.isArray(latestGames) && latestGames[0]) game = latestGames[0];
 
   res.status(200).json({ game });
 }
