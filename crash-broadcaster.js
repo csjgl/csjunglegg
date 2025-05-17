@@ -65,22 +65,15 @@ async function setGameRunning(gameId) {
 }
 
 async function runCrashLoop() {
-  let lastNewGame;
   while (true) {
-    // REMOVE: check for existing pending game at the top of the loop
-    // Instead, always create a new pending game after the 2s pause (or on first run)
-    // Wait for the betting window (15s)
-    let game;
-    if (typeof lastNewGame !== 'undefined') {
-      // Use the last created game
-      game = lastNewGame;
-    } else {
-      // On first run, create a new game immediately
-      const crashpoint = randomCrashPoint();
-      const seed = Math.random().toString(36).slice(2);
-      game = await createGame(seed, crashpoint);
-      ablyChannel.publish('pending', { gameId: game.id });
-    }
+    // After crash, set to paused for 2 seconds before next round (or on first run, just pause)
+    await new Promise(r => setTimeout(r, 2000)); // 2s pause
+    // Now create a new pending game for the next round (starttime will be correct)
+    const crashpoint = randomCrashPoint();
+    const seed = Math.random().toString(36).slice(2);
+    const starttime = new Date().toISOString(); // Betting window starts now
+    let game = await createGame(seed, crashpoint, starttime); // pass starttime explicitly
+    ablyChannel.publish('pending', { gameId: game.id });
     await new Promise(r => setTimeout(r, BETTING_WINDOW_MS));
     await setGameRunning(game.id);
     ablyChannel.publish('running', { gameId: game.id });
@@ -114,16 +107,7 @@ async function runCrashLoop() {
       .update({ status: 'paused' })
       .eq('id', game.id);
     ablyChannel.publish('paused', { gameId: game.id });
-    await new Promise(r => setTimeout(r, 2000)); // 2s pause
-    // Now create a new pending game for the next round (starttime will be correct)
-    const crashpoint = randomCrashPoint();
-    const seed = Math.random().toString(36).slice(2);
-    const starttime = new Date().toISOString(); // Betting window starts now
-    const newGame = await createGame(seed, crashpoint, starttime); // pass starttime explicitly
-    ablyChannel.publish('pending', { gameId: newGame.id });
-    // Save reference for next loop
-    lastNewGame = newGame;
-    // Continue to next loop iteration for the new game
+    // Loop will pause again at the top
   }
 }
 

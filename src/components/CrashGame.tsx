@@ -68,7 +68,11 @@ const CrashGame: React.FC = () => {
     });
     // Listen for pending/newgame event
     channel.subscribe('pending', () => {
-      axios.get('/api/crash/status').then(res => setGame(res.data.game));
+      console.log('[DEBUG] Ably pending event received at', new Date().toISOString());
+      axios.get('/api/crash/status').then(res => {
+        setGame(res.data.game);
+        console.log('[DEBUG] Game after pending event:', res.data.game);
+      });
     });
     return () => {
       channel.unsubscribe();
