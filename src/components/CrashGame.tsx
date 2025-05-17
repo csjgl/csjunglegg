@@ -167,16 +167,21 @@ const CrashGame: React.FC = () => {
     }
   };
 
+  // Debug logs for troubleshooting
+  useEffect(() => {
+    console.log('[DEBUG] game:', game);
+    console.log('[DEBUG] game.status:', game?.status);
+    console.log('[DEBUG] game.id:', game?.id);
+    console.log('[DEBUG] bets:', game?.bets?.length);
+    console.log('[DEBUG] countdown:', countdown);
+    console.log('[DEBUG] isBetting:', isBetting);
+    console.log('[DEBUG] bet input disabled:', isBetting || !game || game.status !== 'pending');
+    console.log('[DEBUG] bet button disabled:', isBetting || !betAmount || !game || game.status !== 'pending');
+  }, [game, countdown, isBetting, betAmount]);
+
   return (
     <div className="max-w-xl mx-auto mt-8 p-6 bg-white rounded shadow">
       <h2 className="text-2xl font-bold mb-4">Crash Game</h2>
-      {/* Debug panel for game state */}
-      <div className="mb-2 p-2 bg-gray-100 border border-gray-300 rounded text-xs text-gray-700">
-        <b>DEBUG:</b> game.status = {game?.status?.toString() ?? 'null'}<br />
-        game.id = {game?.id ?? 'null'}<br />
-        bets: {game?.bets?.length ?? 0}<br />
-        <pre style={{whiteSpace: 'pre-wrap', wordBreak: 'break-all', maxHeight: 100, overflowY: 'auto'}}>{JSON.stringify(game, null, 2)}</pre>
-      </div>
       {error && <div className="text-red-500 mb-2">{error}</div>}
       <div className="mb-4 relative">
         <span className="text-4xl font-mono font-bold text-green-600">{displayedMultiplier.toFixed(2)}x</span>
