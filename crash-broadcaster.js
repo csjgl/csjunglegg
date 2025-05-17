@@ -74,11 +74,17 @@ async function runCrashLoop() {
       .order('starttime', { ascending: false })
       .limit(1);
     let game = Array.isArray(pendingGames) ? pendingGames[0] : pendingGames;
+    // REMOVE this block:
+    // if (!game) {
+    //   // No pending game, create one
+    //   const crashpoint = randomCrashPoint();
+    //   const seed = Math.random().toString(36).slice(2);
+    //   game = await createGame(seed, crashpoint);
+    // }
+    // Instead, if no pending game, just continue (wait for the next round to create it after pause)
     if (!game) {
-      // No pending game, create one
-      const crashpoint = randomCrashPoint();
-      const seed = Math.random().toString(36).slice(2);
-      game = await createGame(seed, crashpoint);
+      await new Promise(r => setTimeout(r, 100));
+      continue;
     }
     // Wait for the betting window (15s)
     await new Promise(r => setTimeout(r, BETTING_WINDOW_MS));
@@ -121,9 +127,9 @@ async function runCrashLoop() {
     // Now create a new pending game for the next round (starttime will be correct)
     const crashpoint = randomCrashPoint();
     const seed = Math.random().toString(36).slice(2);
-    const newGame = await createGame(seed, crashpoint);
+    const newGame = await createGame(seed, crashpoint); // starttime is set here
     ablyChannel.publish('pending', { gameId: newGame.id });
-    // Continue to next loop iteration for the new game
+    // Immediately continue to next loop iteration for the new game
   }
 }
 
