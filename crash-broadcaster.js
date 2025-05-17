@@ -31,13 +31,13 @@ function randomCrashPoint() {
   return Math.floor((1 / (1 - X)) * 100) / 100;
 }
 
-async function createGame(seed, crashpoint) {
+async function createGame(seed, crashpoint, starttime) {
   const { data, error } = await supabase
     .from('crashgame')
     .insert({
-      starttime: new Date().toISOString(),
+      starttime: starttime || new Date().toISOString(),
       seed,
-      status: 'pending', // <-- CORRECT
+      status: 'pending',
       crashpoint
     })
     .select()
@@ -65,33 +65,25 @@ async function setGameRunning(gameId) {
 }
 
 async function runCrashLoop() {
+  let lastNewGame;
   while (true) {
-    // Look for a pending game, or create one if none exists
-    let { data: pendingGames } = await supabase
-      .from('crashgame')
-      .select('*')
-      .eq('status', 'pending')
-      .order('starttime', { ascending: false })
-      .limit(1);
-    let game = Array.isArray(pendingGames) ? pendingGames[0] : pendingGames;
-    // REMOVE this block:
-    // if (!game) {
-    //   // No pending game, create one
-    //   const crashpoint = randomCrashPoint();
-    //   const seed = Math.random().toString(36).slice(2);
-    //   game = await createGame(seed, crashpoint);
-    // }
-    // Instead, if no pending game, just continue (wait for the next round to create it after pause)
-    if (!game) {
-      await new Promise(r => setTimeout(r, 100));
-      continue;
-    }
+    // REMOVE: check for existing pending game at the top of the loop
+    // Instead, always create a new pending game after the 2s pause (or on first run)
     // Wait for the betting window (15s)
+    let game;
+    if (typeof lastNewGame !== 'undefined') {
+      // Use the last created game
+      game = lastNewGame;
+    } else {
+      // On first run, create a new game immediately
+      const crashpoint = randomCrashPoint();
+      const seed = Math.random().toString(36).slice(2);
+      game = await createGame(seed, crashpoint);
+      ablyChannel.publish('pending', { gameId: game.id });
+    }
     await new Promise(r => setTimeout(r, BETTING_WINDOW_MS));
-    // Set to running and refetch the game object
     await setGameRunning(game.id);
-    ablyChannel.publish('running', { gameId: game.id }); // Notify frontend instantly
-    // Refetch the updated game object to ensure status is 'running'
+    ablyChannel.publish('running', { gameId: game.id });
     let { data: runningGame } = await supabase
       .from('crashgame')
       .select('*')
@@ -108,7 +100,6 @@ async function runCrashLoop() {
       if (multiplier >= game.crashpoint || game.crashpoint === 0) {
         crashed = true;
         multiplier = game.crashpoint;
-        // Only now broadcast crash!
         await endGame(game.id, game.crashpoint);
         ablyChannel.publish('crash', { crashpoint: game.crashpoint });
         console.log(`Game crashed at ${game.crashpoint}x`);
@@ -127,9 +118,12 @@ async function runCrashLoop() {
     // Now create a new pending game for the next round (starttime will be correct)
     const crashpoint = randomCrashPoint();
     const seed = Math.random().toString(36).slice(2);
-    const newGame = await createGame(seed, crashpoint); // starttime is set here
+    const starttime = new Date().toISOString(); // Betting window starts now
+    const newGame = await createGame(seed, crashpoint, starttime); // pass starttime explicitly
     ablyChannel.publish('pending', { gameId: newGame.id });
-    // Immediately continue to next loop iteration for the new game
+    // Save reference for next loop
+    lastNewGame = newGame;
+    // Continue to next loop iteration for the new game
   }
 }
 
