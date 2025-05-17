@@ -69,19 +69,15 @@ export default async function handler(req, res) {
 
   // Always transition from 'pending' to 'running' after 15 seconds, but only for the latest pending game
   if (game.status === 'pending') {
-    // Check if this is the latest pending game
-    let { data: allPending } = await supabase
+    let { data: allGames } = await supabase
       .from('crashgame')
-      .select('id, starttime')
-      .eq('status', 'pending')
+      .select('id, starttime, status')
       .order('starttime', { ascending: false });
-    const isLatest = !allPending || allPending.length === 0 || allPending[0].id === game.id;
+    const isLatest = !allGames || allGames.length === 0 || allGames[0].id === game.id;
     if (isLatest) {
       const start = new Date(game.starttime).getTime();
       if (now.getTime() - start > 15000) { // 15 seconds
-        // Update status in DB
         await supabase.from('crashgame').update({ status: 'running' }).eq('id', game.id);
-        // Refetch the updated game so the frontend sees status 'running' and multiplier can start
         const { data: updatedGame } = await supabase
           .from('crashgame')
           .select('*, bets:crashbet(*)')
@@ -92,15 +88,22 @@ export default async function handler(req, res) {
     }
   }
 
-  // If game is running, check if it should crash
+  // Only transition from 'running' to 'crashed' if this is the latest game
   if (game.status === 'running') {
-    const start = new Date(game.starttime).getTime();
-    const nowTime = now.getTime();
-    const crashSeconds = Math.log(game.crashpoint) / 0.05;
-    if (nowTime - start > crashSeconds * 1000) {
-      await supabase.from('crashgame').update({ status: 'crashed', endtime: new Date().toISOString() }).eq('id', game.id);
-      game.status = 'crashed';
-      game.endtime = new Date().toISOString();
+    let { data: allGames } = await supabase
+      .from('crashgame')
+      .select('id, starttime, status')
+      .order('starttime', { ascending: false });
+    const isLatest = !allGames || allGames.length === 0 || allGames[0].id === game.id;
+    if (isLatest) {
+      const start = new Date(game.starttime).getTime();
+      const nowTime = now.getTime();
+      const crashSeconds = Math.log(game.crashpoint) / 0.05;
+      if (nowTime - start > crashSeconds * 1000) {
+        await supabase.from('crashgame').update({ status: 'crashed', endtime: new Date().toISOString() }).eq('id', game.id);
+        game.status = 'crashed';
+        game.endtime = new Date().toISOString();
+      }
     }
   }
 
