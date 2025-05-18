@@ -104,7 +104,7 @@ const CrashGame: React.FC = () => {
 
   useEffect(() => {
     if (!game || game.status !== 'pending') {
-      setCountdown(null);
+      setCountdown(0); // Always set to 0, not null, so UI logic works
       return;
     }
     // Use bettingwindowend if available, otherwise fallback to 15s
@@ -116,7 +116,7 @@ const CrashGame: React.FC = () => {
       end = new Date(game.starttime).getTime() + 15000;
     }
     if (!end) {
-      setCountdown(null);
+      setCountdown(0);
       return;
     }
     function getSecondsLeft() {
@@ -124,8 +124,6 @@ const CrashGame: React.FC = () => {
       let left = Math.ceil((end! - now) / 1000);
       return left > 0 ? left : 0;
     }
-    // Debug: print bettingwindowend/starttime and now
-    console.log('[DEBUG] bettingwindowend:', game.bettingwindowend, 'starttime:', game.starttime, 'local now:', new Date().toISOString(), 'diff:', ((end - Date.now()) / 1000), 's');
     setCountdown(getSecondsLeft());
     const interval = setInterval(() => {
       setCountdown(getSecondsLeft());
@@ -305,7 +303,7 @@ const CrashGame: React.FC = () => {
           placeholder="Bet amount"
           value={betAmount}
           onChange={e => setBetAmount(e.target.value)}
-          disabled={isBetting || !game || game.status !== 'pending' || countdown === 0}
+          disabled={isBetting || !game || game.status !== 'pending' || countdown === null || countdown <= 0}
         />
         <button
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
@@ -316,7 +314,7 @@ const CrashGame: React.FC = () => {
             }
             handleBet();
           }}
-          disabled={isBetting || !betAmount || !game || game.status !== 'pending' || countdown === 0}
+          disabled={isBetting || !betAmount || !game || game.status !== 'pending' || countdown === null || countdown <= 0}
         >
           Place Bet
         </button>
