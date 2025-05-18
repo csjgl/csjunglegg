@@ -6,11 +6,6 @@ if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
-function generateCrashPoint() {
-  // Provably fair: 1.10x to 10.00x
-  return Math.floor((Math.random() * 890) + 110) / 100;
-}
-
 export default async function handler(req, res) {
   // Get the latest crash game
   let { data: games, error: gameError } = await supabase
@@ -26,28 +21,6 @@ export default async function handler(req, res) {
 
   let game = Array.isArray(games) ? games[0] : games;
   const now = new Date();
-
-  // If no game or last game is crashed and 2s have passed, create a new pending game
-  if (!game || (game.status === 'crashed' && game.endtime && (now.getTime() - new Date(game.endtime).getTime() > 2000))) {
-    // Create a new pending game
-    const crashpoint = generateCrashPoint();
-    const seed = Math.random().toString(36).slice(2);
-    const { data: newGame, error: createError } = await supabase
-      .from('crashgame')
-      .insert({
-        starttime: new Date().toISOString(),
-        seed,
-        status: 'pending',
-        crashpoint
-      })
-      .select('*, bets:crashbet(*)')
-      .single();
-    if (createError) {
-      res.status(500).json({ error: createError.message });
-      return;
-    }
-    game = newGame;
-  }
 
   // Always expire all but the latest pending game
   if (game && game.status === 'pending') {
