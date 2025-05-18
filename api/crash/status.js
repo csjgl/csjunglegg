@@ -69,6 +69,18 @@ export default async function handler(req, res) {
       const { data: dbGame } = await supabase.from('crashgame').select('bettingWindowEnd').eq('id', game.id).single();
       game.bettingWindowEnd = dbGame ? dbGame.bettingWindowEnd : null;
     }
+  } else {
+    // If no game found, return a default paused game object to prevent frontend lockup
+    game = {
+      id: 'none',
+      starttime: new Date().toISOString(),
+      endtime: null,
+      crashpoint: null,
+      seed: '',
+      status: 'paused',
+      bets: [],
+      bettingWindowEnd: null
+    };
   }
 
   // Debug: log the returned game object
