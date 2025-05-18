@@ -45,6 +45,9 @@ const CrashGame: React.FC = () => {
   useEffect(() => {
     if (!import.meta.env.VITE_ABLY_PUBLIC_KEY) return;
     const ably = new Ably.Realtime(import.meta.env.VITE_ABLY_PUBLIC_KEY);
+    ably.connection.on((stateChange) => {
+      console.log('[DEBUG] Ably connection state:', stateChange.current);
+    });
     const channel = ably.channels.get('crashgame');
 
     // Listen for multiplier updates
@@ -207,6 +210,20 @@ const CrashGame: React.FC = () => {
       return () => clearInterval(interval);
     }
   }, [game?.status, countdown]);
+
+  // Fallback polling: If not in pending, poll every second for a new pending game
+  useEffect(() => {
+    if (!game || game.status !== 'pending') {
+      const interval = setInterval(() => {
+        axios.get('/api/crash/status').then(res => {
+          if (res.data.game && res.data.game.status === 'pending') {
+            setGame(res.data.game);
+          }
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [game]);
 
   // Debug logs for troubleshooting
   useEffect(() => {
