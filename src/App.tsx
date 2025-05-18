@@ -4,6 +4,7 @@ import axios from 'axios';
 import LoginModal from './components/LoginModal';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import CrashGamePage from './pages/games/crash';
+import RouletteGame from './components/RouletteGame';
 
 // Define a User type for the user state
 interface User {
@@ -75,12 +76,32 @@ const MainRoutes = () => (
 
 const App = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [page, setPage] = useState<'crash' | 'roulette'>('crash');
+
   return (
     <UserProvider>
       <Router>
         <div className="flex flex-col min-h-screen">
           <AppNavbar setShowLoginModal={setShowLoginModal} />
           <main className="flex-1 bg-gray-100">
+            <div>
+              <nav className="flex space-x-4 p-4 bg-gray-100 mb-4 rounded">
+                <button
+                  className={`px-4 py-2 rounded ${page === 'crash' ? 'bg-blue-600 text-white' : 'bg-white text-blue-600 border'}`}
+                  onClick={() => setPage('crash')}
+                >
+                  Crash
+                </button>
+                <button
+                  className={`px-4 py-2 rounded ${page === 'roulette' ? 'bg-blue-600 text-white' : 'bg-white text-blue-600 border'}`}
+                  onClick={() => setPage('roulette')}
+                >
+                  Roulette
+                </button>
+              </nav>
+              {page === 'crash' && <CrashGamePage />}
+              {page === 'roulette' && <RouletteGame />}
+            </div>
             <MainRoutes />
           </main>
           {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
@@ -131,6 +152,7 @@ const AppNavbar = ({ setShowLoginModal }: { setShowLoginModal: (show: boolean) =
         {/* Menu */}
         <nav className="flex items-center space-x-6">
           <a href="/" className="px-4 py-2 rounded bg-gray-200 text-gray-800">Dashboard</a>
+          <a href="/games/crash" className="px-4 py-2 rounded bg-gray-200 text-gray-800">Crash</a>
           <a href="/games/crash" className="px-4 py-2 rounded bg-gray-200 text-gray-800">Crash</a>
         </nav>
         {/* Balance Bar */}

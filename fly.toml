@@ -16,6 +16,10 @@ primary_region = 'fra'
   min_machines_running = 0
   processes = ['app']
 
+[processes]
+  crash = "node crash-broadcaster.js"
+  roulette = "node roulette-broadcaster.js"
+
 [[vm]]
   memory = '1gb'
   cpu_kind = 'shared'
