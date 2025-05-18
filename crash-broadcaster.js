@@ -71,10 +71,13 @@ async function runCrashLoop() {
     // Now create a new pending game for the next round (starttime will be correct)
     const crashpoint = randomCrashPoint();
     const seed = Math.random().toString(36).slice(2);
-    // Set starttime slightly in the future to ensure frontend always gets a full 15s countdown
-    const starttime = new Date(Date.now() + 1000).toISOString(); // 1s in the future
-    let game = await createGame(seed, crashpoint, starttime); // pass starttime explicitly
+    // Set starttime to the exact moment the event is published
+    const now = Date.now();
+    const starttime = new Date(now).toISOString();
+    let game = await createGame(seed, crashpoint, starttime);
+    console.log('[BROADCASTER] Created pending game:', game.id, 'starttime:', starttime, 'now:', new Date().toISOString());
     ablyChannel.publish('pending', { gameId: game.id });
+    console.log('[BROADCASTER] Published pending event for game:', game.id, 'at', new Date().toISOString());
     await new Promise(r => setTimeout(r, BETTING_WINDOW_MS));
     await setGameRunning(game.id);
     ablyChannel.publish('running', { gameId: game.id });
