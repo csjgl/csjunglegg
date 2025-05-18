@@ -37,28 +37,13 @@ export default async function handler(req, res) {
     }
   }
 
-  // Only return a pending game if it was created in the last 2 seconds
-  const now = Date.now();
-  let { data: latestPending } = await supabase
+  // Only return the latest game, regardless of status
+  let { data: latestGames } = await supabase
     .from('crashgame')
     .select('*, bets:crashbet(*)')
-    .eq('status', 'pending')
     .order('starttime', { ascending: false })
     .limit(1);
-  if (
-    Array.isArray(latestPending) &&
-    latestPending[0] &&
-    now - new Date(latestPending[0].starttime).getTime() < 2000
-  ) {
-    game = latestPending[0];
-  } else {
-    let { data: latestGames } = await supabase
-      .from('crashgame')
-      .select('*, bets:crashbet(*)')
-      .order('starttime', { ascending: false })
-      .limit(1);
-    if (Array.isArray(latestGames) && latestGames[0]) game = latestGames[0];
-  }
+  if (Array.isArray(latestGames) && latestGames[0]) game = latestGames[0];
 
   // Refresh bets for latest state
   if (game) {
