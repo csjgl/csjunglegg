@@ -19,7 +19,7 @@ const RouletteGame: React.FC = () => {
   const [betAmount, setBetAmount] = useState('');
   const [countdown, setCountdown] = useState<number>(0);
   const [history, setHistory] = useState<RouletteGameData[]>([]);
-  const [ablyChannel, setAblyChannel] = useState<any>(null);
+  // Remove ablyChannel state, not needed
 
   useEffect(() => {
     axios.get('/api/roulette/status').then(res => setGame(res.data.game));
@@ -64,14 +64,15 @@ const RouletteGame: React.FC = () => {
   useEffect(() => {
     if (game?.status === 'spinning' && game.color) {
       setSpinning(true);
-      // Pick a random angle for the result color
       const colorOrder = ['red','black','red','black','red','black','red','black','red','black','green'];
       const colorIndex = colorOrder.indexOf(game.color);
-      // Add randomness to stop position for realism
       const segmentAngle = 360 / colorOrder.length;
       const randomOffset = Math.random() * (segmentAngle * 0.7) - (segmentAngle * 0.35); // -35% to +35% of segment
       const targetAngle = 360 * 6 + (colorIndex * segmentAngle) + randomOffset; // 6 full spins + result
       if (wheelRef.current) {
+        // Reset to 0 instantly before spinning for visual consistency
+        gsap.set(wheelRef.current, { rotate: 0 });
+        // Animate spin with realistic bounce and overshoot
         gsap.to(wheelRef.current, {
           rotate: targetAngle,
           duration: 2.5,
@@ -104,7 +105,6 @@ const RouletteGame: React.FC = () => {
       transports: ['web_socket'],
     });
     const channel = ably.channels.get('roulette');
-    setAblyChannel(channel);
     channel.subscribe('pending', () => {
       axios.get('/api/roulette/status').then(res => setGame(res.data.game));
       axios.get('/api/roulette/history').then(res => {
