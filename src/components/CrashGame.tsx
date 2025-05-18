@@ -17,7 +17,7 @@ interface CrashGameData {
   seed: string;
   status: string;
   bets: CrashBetData[];
-  bettingwindowend?: string; // changed to lowercase
+  bettingwindowend?: string; // ensure correct field name
 }
 
 interface CrashBetData {
@@ -103,25 +103,35 @@ const CrashGame: React.FC = () => {
   }, [game?.id, game?.status]);
 
   useEffect(() => {
-    if (!game || game.status !== 'pending' || !game.bettingwindowend) {
+    if (!game || game.status !== 'pending') {
       setCountdown(null);
       return;
     }
-    // Always recalculate from the latest bettingwindowend
-    const end = new Date(game.bettingwindowend).getTime();
+    // Use bettingwindowend if available, otherwise fallback to 15s
+    let end: number | null = null;
+    if (game.bettingwindowend) {
+      end = new Date(game.bettingwindowend).getTime();
+    } else if (game.status === 'pending') {
+      // fallback: assume 15s from starttime
+      end = new Date(game.starttime).getTime() + 15000;
+    }
+    if (!end) {
+      setCountdown(null);
+      return;
+    }
     function getSecondsLeft() {
       const now = Date.now();
-      let left = Math.ceil((end - now) / 1000);
+      let left = Math.ceil((end! - now) / 1000);
       return left > 0 ? left : 0;
     }
-    // Debug: print bettingwindowend and now
-    console.log('[DEBUG] bettingwindowend:', game.bettingwindowend, 'local now:', new Date().toISOString(), 'diff:', (end - Date.now()) / 1000, 's');
+    // Debug: print bettingwindowend/starttime and now
+    console.log('[DEBUG] bettingwindowend:', game.bettingwindowend, 'starttime:', game.starttime, 'local now:', new Date().toISOString(), 'diff:', ((end - Date.now()) / 1000), 's');
     setCountdown(getSecondsLeft());
     const interval = setInterval(() => {
       setCountdown(getSecondsLeft());
     }, 1000);
     return () => clearInterval(interval);
-  }, [game?.id, game?.status, game?.bettingwindowend]);
+  }, [game?.id, game?.status, game?.bettingwindowend, game?.starttime]);
 
   // Real-time sync for crash game
   useEffect(() => {
@@ -295,7 +305,7 @@ const CrashGame: React.FC = () => {
           placeholder="Bet amount"
           value={betAmount}
           onChange={e => setBetAmount(e.target.value)}
-          disabled={isBetting || !game || game.status !== 'pending'}
+          disabled={isBetting || !game || game.status !== 'pending' || countdown === 0}
         />
         <button
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
@@ -306,7 +316,7 @@ const CrashGame: React.FC = () => {
             }
             handleBet();
           }}
-          disabled={isBetting || !betAmount || !game || game.status !== 'pending'}
+          disabled={isBetting || !betAmount || !game || game.status !== 'pending' || countdown === 0}
         >
           Place Bet
         </button>
