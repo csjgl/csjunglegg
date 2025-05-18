@@ -4,7 +4,7 @@ import axios from 'axios';
 import LoginModal from './components/LoginModal';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import CrashGamePage from './pages/games/crash';
-import RouletteGame from './components/RouletteGame';
+import RouletteGamePage from './pages/games/roulette';
 
 // Define a User type for the user state
 interface User {
@@ -71,7 +71,7 @@ const MainRoutes = () => (
   <Routes>
     <Route path="/" element={<div />} />
     <Route path="/games/crash" element={<CrashGamePage />} />
-    <Route path="/games/roulette" element={<RouletteGame />} />
+    <Route path="/games/roulette" element={<RouletteGamePage />} />
   </Routes>
 );
 
