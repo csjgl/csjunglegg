@@ -125,12 +125,7 @@ const CrashGame: React.FC = () => {
       let left = Math.max(0, Math.ceil((end - now) / 1000));
       return left;
     }
-    // If this is a new pending game, force countdown to 15
-    if (getSecondsLeft() > 14) {
-      setCountdown(15);
-    } else {
-      setCountdown(getSecondsLeft());
-    }
+    setCountdown(getSecondsLeft()); // Always set to actual seconds left
     const interval = setInterval(() => {
       setCountdown(getSecondsLeft());
     }, 1000);
