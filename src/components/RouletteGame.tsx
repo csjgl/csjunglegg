@@ -206,10 +206,9 @@ const RouletteGame: React.FC = () => {
                     textShadow: '0 1px 2px #0008',
                   }}
                 >
-                  {color === 'green' ? '0' : ''}
                 </div>
               ))
-            }
+            )}
           </div>
           {/* Center pointer */}
           <div className="absolute top-0 left-1/2 h-16 w-0.5 bg-yellow-400" style={{ transform: 'translateX(-50%)' }} />
