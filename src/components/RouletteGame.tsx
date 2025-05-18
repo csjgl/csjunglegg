@@ -83,9 +83,15 @@ const RouletteGame: React.FC = () => {
       setTapeAnimating(true);
       setLastAnimatedGameId(game.id);
       // Find the index of the result in the last repeat (so it lands under the pointer)
-      const resultIndex = (colorOrder.length * (TAPE_REPEAT - 2)) + colorOrder.lastIndexOf(game.color);
+      const resultIndex = (colorOrder.length * (TAPE_REPEAT - 2)) + colorOrder.lastIndexOf(game.color!);
       // Add a random offset within the segment for 'bait' effect
-      const randomOffset = Math.floor(Math.random() * (SEGMENT_WIDTH - 16)) + 8; // avoid extreme edges
+      let minOffset = 8, maxOffset = SEGMENT_WIDTH - 8;
+      // For green, make sure the offset doesn't push the pointer outside the green segment
+      if (game.color === 'green') {
+        minOffset = 12;
+        maxOffset = SEGMENT_WIDTH - 12;
+      }
+      const randomOffset = Math.floor(Math.random() * (maxOffset - minOffset + 1)) + minOffset;
       const targetOffset = -((resultIndex * SEGMENT_WIDTH) + randomOffset) + (Math.floor(TAPE_LENGTH / 2) * SEGMENT_WIDTH);
       if (tapeRef.current) {
         // Reset tape to center before animating
