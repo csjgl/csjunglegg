@@ -67,13 +67,25 @@ export default async function handler(req, res) {
     }
   }
 
-  // Always operate on the latest game by starttime
-  let { data: latestGames } = await supabase
+  // Always operate on the latest *pending* or *running* or *paused* or *crashed* game by starttime
+  // But prefer the latest 'pending' game if it exists
+  let { data: latestPending } = await supabase
     .from('crashgame')
     .select('*, bets:crashbet(*)')
+    .eq('status', 'pending')
     .order('starttime', { ascending: false })
     .limit(1);
-  if (Array.isArray(latestGames) && latestGames[0]) game = latestGames[0];
+  if (Array.isArray(latestPending) && latestPending[0]) {
+    game = latestPending[0];
+  } else {
+    // fallback to latest game of any status
+    let { data: latestGames } = await supabase
+      .from('crashgame')
+      .select('*, bets:crashbet(*)')
+      .order('starttime', { ascending: false })
+      .limit(1);
+    if (Array.isArray(latestGames) && latestGames[0]) game = latestGames[0];
+  }
 
   // If the latest game is paused, return it as the current game
   if (game && game.status === 'paused') {
