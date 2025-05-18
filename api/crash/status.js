@@ -64,6 +64,11 @@ export default async function handler(req, res) {
   if (game) {
     const { data: bets } = await supabase.from('crashbet').select('*').eq('gameid', game.id);
     game.bets = bets || [];
+    // Ensure bettingWindowEnd is included (should be by default, but force it for safety)
+    if (!('bettingWindowEnd' in game)) {
+      const { data: dbGame } = await supabase.from('crashgame').select('bettingWindowEnd').eq('id', game.id).single();
+      if (dbGame && dbGame.bettingWindowEnd) game.bettingWindowEnd = dbGame.bettingWindowEnd;
+    }
   }
 
   res.status(200).json({ game });

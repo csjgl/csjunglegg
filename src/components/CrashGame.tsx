@@ -17,6 +17,7 @@ interface CrashGameData {
   seed: string;
   status: string;
   bets: CrashBetData[];
+  bettingWindowEnd?: string; // add this line
 }
 
 interface CrashBetData {
@@ -102,26 +103,25 @@ const CrashGame: React.FC = () => {
   }, [game?.id, game?.status]);
 
   useEffect(() => {
-    if (!game || game.status !== 'pending') {
+    if (!game || game.status !== 'pending' || !game.bettingWindowEnd) {
       setCountdown(null);
       return;
     }
-    // Always recalculate from the latest starttime
-    const BETTING_WINDOW = 15; // seconds
-    const start = new Date(game.starttime).getTime();
+    // Always recalculate from the latest bettingWindowEnd
+    const end = new Date(game.bettingWindowEnd).getTime();
     function getSecondsLeft() {
       const now = Date.now();
-      let left = BETTING_WINDOW - Math.ceil((now - start) / 1000);
+      let left = Math.ceil((end - now) / 1000);
       return left > 0 ? left : 0;
     }
-    // Debug: print starttime and now
-    console.log('[DEBUG] starttime:', game.starttime, 'local now:', new Date().toISOString(), 'diff:', (Date.now() - start) / 1000, 's');
+    // Debug: print bettingWindowEnd and now
+    console.log('[DEBUG] bettingWindowEnd:', game.bettingWindowEnd, 'local now:', new Date().toISOString(), 'diff:', (end - Date.now()) / 1000, 's');
     setCountdown(getSecondsLeft());
     const interval = setInterval(() => {
       setCountdown(getSecondsLeft());
     }, 1000);
     return () => clearInterval(interval);
-  }, [game?.id, game?.status, game?.starttime]);
+  }, [game?.id, game?.status, game?.bettingWindowEnd]);
 
   // Real-time sync for crash game
   useEffect(() => {
