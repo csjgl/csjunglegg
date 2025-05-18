@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { gsap } from 'gsap';
+import Ably from 'ably';
 
 interface RouletteGameData {
   id: string;
@@ -18,6 +19,7 @@ const RouletteGame: React.FC = () => {
   const [betAmount, setBetAmount] = useState('');
   const [countdown, setCountdown] = useState<number>(0);
   const [history, setHistory] = useState<RouletteGameData[]>([]);
+  const [ablyChannel, setAblyChannel] = useState<any>(null);
 
   useEffect(() => {
     axios.get('/api/roulette/status').then(res => setGame(res.data.game));
@@ -93,6 +95,38 @@ const RouletteGame: React.FC = () => {
     if (!betAmount) return;
     await axios.post('/api/roulette/bet', { gameId: game?.id, color: betColor, amount: Number(betAmount) });
   };
+
+  // Ably real-time integration for roulette
+  useEffect(() => {
+    if (!import.meta.env.VITE_ABLY_PUBLIC_KEY) return;
+    const ably = new Ably.Realtime({
+      key: import.meta.env.VITE_ABLY_PUBLIC_KEY,
+      transports: ['web_socket'],
+    });
+    const channel = ably.channels.get('roulette');
+    setAblyChannel(channel);
+    channel.subscribe('pending', () => {
+      axios.get('/api/roulette/status').then(res => setGame(res.data.game));
+      axios.get('/api/roulette/history').then(res => {
+        const now = Date.now();
+        setHistory(res.data.games.filter((g: RouletteGameData) => g.status === 'finished' && new Date(g.starttime).getTime() < now));
+      });
+    });
+    channel.subscribe('spinning', () => {
+      axios.get('/api/roulette/status').then(res => setGame(res.data.game));
+    });
+    channel.subscribe('result', () => {
+      axios.get('/api/roulette/status').then(res => setGame(res.data.game));
+      axios.get('/api/roulette/history').then(res => {
+        const now = Date.now();
+        setHistory(res.data.games.filter((g: RouletteGameData) => g.status === 'finished' && new Date(g.starttime).getTime() < now));
+      });
+    });
+    return () => {
+      channel.unsubscribe();
+      ably.close();
+    };
+  }, []);
 
   return (
     <div className="max-w-xl mx-auto mt-8 p-6 bg-white rounded shadow">
