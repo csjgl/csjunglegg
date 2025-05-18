@@ -40,6 +40,7 @@ const CrashGame: React.FC = () => {
   const [error, setError] = useState('');
   const [showCrashEffect, setShowCrashEffect] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [preCountdown, setPreCountdown] = useState<number | null>(null);
   const [displayedMultiplier, setDisplayedMultiplier] = useState(1.0);
 
   // Ably real-time integration
@@ -105,29 +106,48 @@ const CrashGame: React.FC = () => {
   useEffect(() => {
     if (!game || game.status !== 'pending') {
       setCountdown(0);
+      setPreCountdown(null);
       return;
     }
-    // Use bettingwindowend if available, otherwise fallback to 15s
+    let start: number | null = null;
     let end: number | null = null;
+    if (game.starttime) {
+      start = new Date(game.starttime).getTime();
+    }
     if (game.bettingwindowend) {
       end = new Date(game.bettingwindowend).getTime();
-    } else if (game.status === 'pending') {
-      // fallback: assume 15s from starttime
-      end = new Date(game.starttime).getTime() + 15000;
     }
-    if (!end) {
+    if (!start || !end) {
       setCountdown(0);
+      setPreCountdown(null);
       return;
     }
-    function getSecondsLeft() {
+    function getPreCountdown() {
+      const now = Date.now();
+      if (start === null) return 0;
+      return Math.max(0, Math.ceil((start - now) / 1000));
+    }
+    function getCountdown() {
       const now = Date.now();
       if (end === null) return 0;
-      let left = Math.max(0, Math.ceil((end - now) / 1000));
-      return left;
+      return Math.max(0, Math.ceil((end - now) / 1000));
     }
-    setCountdown(getSecondsLeft()); // Always set to actual seconds left
+    // Show pre-countdown if before starttime, otherwise show betting countdown
+    if (Date.now() < start) {
+      setPreCountdown(getPreCountdown());
+      setCountdown(null);
+    } else {
+      setPreCountdown(null);
+      setCountdown(getCountdown());
+    }
     const interval = setInterval(() => {
-      setCountdown(getSecondsLeft());
+      if (Date.now() < start!) {
+        setPreCountdown(getPreCountdown());
+        setCountdown(null);
+      } else {
+        setPreCountdown(null);
+        setCountdown(getCountdown());
+      }
     }, 1000);
     return () => clearInterval(interval);
   }, [game?.id, game?.status, game?.bettingwindowend, game?.starttime]);
@@ -269,8 +289,14 @@ const CrashGame: React.FC = () => {
             💥 CRASHED!
           </span>
         )}
-        {/* Show countdown during betting window or paused state */}
-        {game?.status === 'pending' && countdown !== null && (
+        {/* Show pre-countdown before betting window opens */}
+        {game?.status === 'pending' && preCountdown !== null && preCountdown > 0 && (
+          <span className="absolute right-0 top-0 text-lg font-bold text-gray-500 bg-white bg-opacity-80 px-2 py-1 rounded shadow">
+            Next round starts in: {preCountdown}s
+          </span>
+        )}
+        {/* Show countdown during betting window */}
+        {game?.status === 'pending' && countdown !== null && preCountdown === null && (
           <span className="absolute right-0 top-0 text-lg font-bold text-blue-600 bg-white bg-opacity-80 px-2 py-1 rounded shadow">
             Betting ends in: {countdown}s
           </span>
@@ -286,7 +312,12 @@ const CrashGame: React.FC = () => {
           Paused... Next round starting soon!
         </div>
       )}
-      {game?.status === 'pending' && countdown !== null && (
+      {game?.status === 'pending' && preCountdown !== null && preCountdown > 0 && (
+        <div className="mb-2 text-center text-gray-500 font-semibold text-lg animate-pulse">
+          Next round starting in {preCountdown}s
+        </div>
+      )}
+      {game?.status === 'pending' && countdown !== null && preCountdown === null && (
         <div className="mb-2 text-center text-blue-700 font-semibold text-lg animate-pulse">
           {countdown > 0 ? (
             <>Place your bets! Round starts in {countdown}s</>
@@ -304,7 +335,7 @@ const CrashGame: React.FC = () => {
           placeholder="Bet amount"
           value={betAmount}
           onChange={e => setBetAmount(e.target.value)}
-          disabled={isBetting || !game || game.status !== 'pending' || countdown === null || countdown <= 0}
+          disabled={isBetting || !game || game.status !== 'pending' || countdown === null || countdown <= 0 || preCountdown !== null}
         />
         <button
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
@@ -315,7 +346,7 @@ const CrashGame: React.FC = () => {
             }
             handleBet();
           }}
-          disabled={isBetting || !betAmount || !game || game.status !== 'pending' || countdown === null || countdown <= 0}
+          disabled={isBetting || !betAmount || !game || game.status !== 'pending' || countdown === null || countdown <= 0 || preCountdown !== null}
         >
           Place Bet
         </button>

@@ -67,20 +67,21 @@ async function setGameRunning(gameId) {
 
 async function runCrashLoop() {
   while (true) {
-    // After crash, set to paused for 2 seconds before next round (or on first run, just pause)
+    // After crash, set to paused for 2 seconds before next round
     await new Promise(r => setTimeout(r, 2000)); // 2s pause
-    // Now create a new pending game for the next round (starttime is 7s in the future)
+    // Schedule the next round a few seconds in the future for fair sync (like csgoroll)
     const crashpoint = randomCrashPoint();
     const seed = Math.random().toString(36).slice(2);
     const now = Date.now();
-    const starttime = new Date(now + 7000).toISOString(); // 7s in the future
-    const bettingwindowend = new Date(now + 7000 + BETTING_WINDOW_MS).toISOString();
+    const SCHEDULE_OFFSET = 4000; // 4s in the future for all clients to sync
+    const starttime = new Date(now + SCHEDULE_OFFSET).toISOString();
+    const bettingwindowend = new Date(now + SCHEDULE_OFFSET + BETTING_WINDOW_MS).toISOString();
     let game = await createGame(seed, crashpoint, starttime, bettingwindowend);
     console.log('[BROADCASTER] Created pending game:', game.id, 'starttime:', starttime, 'bettingwindowend:', bettingwindowend, 'now:', new Date().toISOString());
     ablyChannel.publish('pending', { gameId: game.id });
     console.log('[BROADCASTER] Published pending event for game:', game.id, 'at', new Date().toISOString());
-    // Wait until the betting window actually ends
-    await new Promise(r => setTimeout(r, 7000 + BETTING_WINDOW_MS));
+    // Wait until the betting window actually ends (4s offset + 15s betting)
+    await new Promise(r => setTimeout(r, SCHEDULE_OFFSET + BETTING_WINDOW_MS));
     await setGameRunning(game.id);
     ablyChannel.publish('running', { gameId: game.id });
     let { data: runningGame } = await supabase
