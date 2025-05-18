@@ -2,6 +2,10 @@
   "rewrites": [
     { "source": "/auth/steam", "destination": "/api/index" },
     { "source": "/auth/steam/return", "destination": "/api/index" },
-    { "source": "/games/crash", "destination": "/index.html" }
+    { "source": "/games/crash", "destination": "/index.html" },
+    { "source": "/games/roulette", "destination": "/index.html" },
+    { "source": "/games/roulette/", "destination": "/index.html" },
+    { "source": "/games/crash/", "destination": "/index.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

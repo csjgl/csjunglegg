@@ -2,7 +2,7 @@ import './index.css';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import axios from 'axios';
 import LoginModal from './components/LoginModal';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import CrashGamePage from './pages/games/crash';
 import RouletteGamePage from './pages/games/roulette';
 
@@ -133,9 +133,9 @@ const AppNavbar = ({ setShowLoginModal }: { setShowLoginModal: (show: boolean) =
         </div>
         {/* Menu */}
         <nav className="flex items-center space-x-6">
-          <a href="/" className="px-4 py-2 rounded bg-gray-200 text-gray-800">Dashboard</a>
-          <a href="/games/crash" className="px-4 py-2 rounded bg-gray-200 text-gray-800">Crash</a>
-          <a href="/games/roulette" className="px-4 py-2 rounded bg-gray-200 text-gray-800">Roulette</a>
+          <Link to="/" className="px-4 py-2 rounded bg-gray-200 text-gray-800">Dashboard</Link>
+          <Link to="/games/crash" className="px-4 py-2 rounded bg-gray-200 text-gray-800">Crash</Link>
+          <Link to="/games/roulette" className="px-4 py-2 rounded bg-gray-200 text-gray-800">Roulette</Link>
         </nav>
         {/* Balance Bar */}
         {user && user.balance && (
