@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { gsap } from 'gsap';
 
 interface RouletteGameData {
   id: string;
@@ -16,7 +17,6 @@ const RouletteGame: React.FC = () => {
   const [betColor, setBetColor] = useState<string>('red');
   const [betAmount, setBetAmount] = useState('');
   const [countdown, setCountdown] = useState<number>(0);
-  const [result, setResult] = useState<string | null>(null);
   const [history, setHistory] = useState<RouletteGameData[]>([]);
 
   useEffect(() => {
@@ -48,34 +48,42 @@ const RouletteGame: React.FC = () => {
   useEffect(() => {
     if (game?.status === 'spinning') {
       setRolling(true);
-      setResult(null);
     } else if (game?.status === 'finished') {
       setRolling(false);
-      setResult(game.color || null);
     }
-  }, [game?.status, game?.color]);
+  }, [game?.status]);
 
   // Wheel animation state
-  const [wheelAngle, setWheelAngle] = useState(0);
   const [spinning, setSpinning] = useState(false);
   const [spinResult, setSpinResult] = useState<string | null>(null);
+  const wheelRef = React.useRef<HTMLDivElement>(null);
 
-  // Animate the wheel when spinning
+  // Animate the wheel when spinning using GSAP
   useEffect(() => {
     if (game?.status === 'spinning' && game.color) {
       setSpinning(true);
       // Pick a random angle for the result color
-      const colorIndex = ['red','black','red','black','red','black','red','black','red','black','green'].indexOf(game.color);
-      const angle = 360 * 5 + (colorIndex * (360 / 11)); // 5 full spins + result
-      setTimeout(() => {
-        setWheelAngle(angle);
-        setTimeout(() => {
-          setSpinning(false);
-          setSpinResult(game.color!);
-        }, 2000);
-      }, 200); // slight delay for effect
+      const colorOrder = ['red','black','red','black','red','black','red','black','red','black','green'];
+      const colorIndex = colorOrder.indexOf(game.color);
+      // Add randomness to stop position for realism
+      const segmentAngle = 360 / colorOrder.length;
+      const randomOffset = Math.random() * (segmentAngle * 0.7) - (segmentAngle * 0.35); // -35% to +35% of segment
+      const targetAngle = 360 * 6 + (colorIndex * segmentAngle) + randomOffset; // 6 full spins + result
+      if (wheelRef.current) {
+        gsap.to(wheelRef.current, {
+          rotate: targetAngle,
+          duration: 2.5,
+          ease: 'power4.out',
+          onComplete: () => {
+            setSpinning(false);
+            setSpinResult(game.color!);
+          }
+        });
+      }
     } else if (game?.status === 'pending') {
-      setWheelAngle(0);
+      if (wheelRef.current) {
+        gsap.set(wheelRef.current, { rotate: 0 });
+      }
       setSpinResult(null);
       setSpinning(false);
     }
@@ -118,17 +126,17 @@ const RouletteGame: React.FC = () => {
       <div className="flex flex-col items-center mb-4">
         <div className="relative w-32 h-32 mb-2">
           <div
+            ref={wheelRef}
             className="absolute w-full h-full rounded-full border-4 border-gray-300"
             style={{
-              transition: spinning ? 'transform 2s cubic-bezier(0.23, 1, 0.32, 1)' : 'none',
-              transform: `rotate(${wheelAngle}deg)`
+              // GSAP handles transform
             }}
           >
             {/* Render 11 segments for the wheel */}
             {['red','black','red','black','red','black','red','black','red','black','green'].map((color, i) => (
               <div
                 key={i}
-                className={`absolute left-1/2 top-1/2 w-1/2 h-1/2 origin-bottom rotate-${i * (360/11)}`}
+                className={`absolute left-1/2 top-1/2 w-1/2 h-1/2 origin-bottom`}
                 style={{
                   background: color,
                   clipPath: 'polygon(0% 0%, 100% 0%, 50% 100%)',
