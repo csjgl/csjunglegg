@@ -67,28 +67,32 @@ const RouletteGame: React.FC = () => {
   // Tape animation state for classic roulette
   const [tapeAnimating, setTapeAnimating] = useState(false);
   const [tapeResult, setTapeResult] = useState<string | null>(null);
+  const [lastAnimatedGameId, setLastAnimatedGameId] = useState<string | null>(null);
   const tapeRef = React.useRef<HTMLDivElement>(null);
   const colorOrder = ['red','black','red','black','red','black','red','black','red','black','green'];
   const TAPE_REPEAT = 8; // How many times to repeat the color sequence for a long tape
   const SEGMENT_WIDTH = 40; // px, width of each color segment
   const TAPE_LENGTH = colorOrder.length * TAPE_REPEAT;
 
-  // Animate the tape when spinning using GSAP
+  // Animate the tape when a new result is available (spinning or finished)
   useEffect(() => {
-    if (game?.status === 'spinning' && game.color) {
+    if (!game || !game.color) return;
+    // Only animate if this game hasn't been animated yet
+    if (lastAnimatedGameId === game.id) return;
+    if ((game.status === 'spinning' || game.status === 'finished') && game.color) {
       setTapeAnimating(true);
+      setLastAnimatedGameId(game.id);
       // Find the index of the result in the last repeat (so it lands under the pointer)
       const resultIndex = (colorOrder.length * (TAPE_REPEAT - 2)) + colorOrder.lastIndexOf(game.color);
       const targetOffset = -(resultIndex * SEGMENT_WIDTH) + (Math.floor(TAPE_LENGTH / 2) * SEGMENT_WIDTH);
       if (tapeRef.current) {
-        // Only animate if not already at start
+        // Reset tape to center before animating
         gsap.to(tapeRef.current, { x: 0, duration: 0 });
-        // Animate tape to target offset after a short delay for visual effect
         setTimeout(() => {
           gsap.to(tapeRef.current, {
             x: targetOffset,
             duration: 2.5,
-            ease: 'power4.out',
+            ease: 'expo.out', // strong easing for realism
             onComplete: () => {
               setTapeAnimating(false);
               setTapeResult(game.color!);
@@ -96,14 +100,20 @@ const RouletteGame: React.FC = () => {
           });
         }, 150); // slight delay to allow for visual reset
       }
-    } else if (game?.status === 'pending') {
+    }
+  }, [game?.id, game?.color, game?.status]);
+
+  // Reset tape to center at the start of each round
+  useEffect(() => {
+    if (game?.status === 'pending') {
       if (tapeRef.current) {
         gsap.to(tapeRef.current, { x: 0, duration: 0.2, ease: 'power2.inOut' });
       }
       setTapeResult(null);
       setTapeAnimating(false);
+      setLastAnimatedGameId(null);
     }
-  }, [game?.status, game?.color]);
+  }, [game?.status]);
 
   const handleBet = async () => {
     if (!betAmount) return;
@@ -199,7 +209,7 @@ const RouletteGame: React.FC = () => {
                   {color === 'green' ? '0' : ''}
                 </div>
               ))
-            )}
+            }
           </div>
           {/* Center pointer */}
           <div className="absolute top-0 left-1/2 h-16 w-0.5 bg-yellow-400" style={{ transform: 'translateX(-50%)' }} />
