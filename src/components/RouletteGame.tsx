@@ -93,9 +93,12 @@ const RouletteGame: React.FC = () => {
       // Each segment is SEGMENT_WIDTH px, so find the offset within the segment
       const ticketInSegment = ticket - colorStartTicket;
       const pxPerTicket = SEGMENT_WIDTH / TICKETS_PER_SEGMENT;
-      const offsetWithinSegment = ticketInSegment * pxPerTicket;
+      // Pick a random offset within the segment for bait effect
+      const minOffset = 8, maxOffset = SEGMENT_WIDTH - 8;
+      const offsetWithinSegment = Math.floor(Math.random() * (maxOffset - minOffset + 1)) + minOffset;
       // Find the index of the result in the last repeat (so it lands under the pointer)
       const resultIndex = (colorOrder.length * (TAPE_REPEAT - 2)) + colorIndex;
+      // The pointer should land inside the result segment in the last repeat
       const targetOffset = -((resultIndex * SEGMENT_WIDTH) + offsetWithinSegment) + (Math.floor(TAPE_LENGTH / 2) * SEGMENT_WIDTH);
       if (tapeRef.current) {
         gsap.to(tapeRef.current, { x: 0, duration: 0 });
