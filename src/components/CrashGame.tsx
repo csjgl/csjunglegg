@@ -9,6 +9,8 @@ const supabase = createClient(
   import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
+const GROWTH_RATE = 0.00006; // Must match backend
+
 interface CrashGameData {
   id: string;
   starttime: string;
@@ -56,10 +58,10 @@ const CrashGame: React.FC = () => {
     });
     const channel = ably.channels.get('crashgame');
 
-    // Listen for multiplier updates
+    // Listen for multiplier updates (for instant sync on Ably event)
     channel.subscribe('multiplier', (msg) => {
       setMultiplier(msg.data.multiplier);
-      setDisplayedMultiplier(msg.data.multiplier);
+      setDisplayedMultiplier(msg.data.multiplier); // instant sync if backend sends
     });
     // Listen for crash event
     channel.subscribe('crash', (msg) => {
@@ -264,6 +266,29 @@ const CrashGame: React.FC = () => {
       };
     }
   }, [game]);
+
+  // Animate multiplier smoothly during running phase
+  useEffect(() => {
+    if (!game || game.status !== 'running' || !game.starttime || !game.crashpoint) {
+      return;
+    }
+    let animationFrame: number;
+    const start = new Date(game.starttime).getTime();
+    const crash = game.crashpoint;
+    const update = () => {
+      const now = Date.now();
+      const elapsed = now - start;
+      // Use the same formula as backend for multiplier
+      let nextMultiplier = Math.exp(GROWTH_RATE * elapsed);
+      if (nextMultiplier > crash) nextMultiplier = crash;
+      setDisplayedMultiplier(Number(nextMultiplier.toFixed(2)));
+      if (nextMultiplier < crash && game.status === 'running') {
+        animationFrame = requestAnimationFrame(update);
+      }
+    };
+    update();
+    return () => cancelAnimationFrame(animationFrame);
+  }, [game?.id, game?.status, game?.starttime, game?.crashpoint]);
 
   // Debug logs for troubleshooting
   useEffect(() => {
