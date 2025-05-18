@@ -82,19 +82,22 @@ const RouletteGame: React.FC = () => {
     if ((game.status === 'spinning' || game.status === 'finished') && game.color) {
       setTapeAnimating(true);
       setLastAnimatedGameId(game.id);
+      // Ticket system: 0-999, each color gets a range
+      const TICKETS_PER_SEGMENT = Math.floor(1000 / colorOrder.length);
+      const colorIndex = colorOrder.lastIndexOf(game.color!);
+      const colorStartTicket = colorIndex * TICKETS_PER_SEGMENT;
+      const colorEndTicket = colorStartTicket + TICKETS_PER_SEGMENT - 1;
+      // Pick a random ticket within the result color's range
+      const ticket = Math.floor(Math.random() * (colorEndTicket - colorStartTicket + 1)) + colorStartTicket;
+      // Map ticket to pixel offset within the segment
+      // Each segment is SEGMENT_WIDTH px, so find the offset within the segment
+      const ticketInSegment = ticket - colorStartTicket;
+      const pxPerTicket = SEGMENT_WIDTH / TICKETS_PER_SEGMENT;
+      const offsetWithinSegment = ticketInSegment * pxPerTicket;
       // Find the index of the result in the last repeat (so it lands under the pointer)
-      const resultIndex = (colorOrder.length * (TAPE_REPEAT - 2)) + colorOrder.lastIndexOf(game.color!);
-      // Add a random offset within the segment for 'bait' effect
-      let minOffset = 8, maxOffset = SEGMENT_WIDTH - 8;
-      // For green, make sure the offset doesn't push the pointer outside the green segment
-      if (game.color === 'green') {
-        minOffset = 12;
-        maxOffset = SEGMENT_WIDTH - 12;
-      }
-      const randomOffset = Math.floor(Math.random() * (maxOffset - minOffset + 1)) + minOffset;
-      const targetOffset = -((resultIndex * SEGMENT_WIDTH) + randomOffset) + (Math.floor(TAPE_LENGTH / 2) * SEGMENT_WIDTH);
+      const resultIndex = (colorOrder.length * (TAPE_REPEAT - 2)) + colorIndex;
+      const targetOffset = -((resultIndex * SEGMENT_WIDTH) + offsetWithinSegment) + (Math.floor(TAPE_LENGTH / 2) * SEGMENT_WIDTH);
       if (tapeRef.current) {
-        // Reset tape to center before animating
         gsap.to(tapeRef.current, { x: 0, duration: 0 });
         setTimeout(() => {
           gsap.to(tapeRef.current, {
@@ -106,7 +109,7 @@ const RouletteGame: React.FC = () => {
               setTapeResult(game.color!);
             }
           });
-        }, 150); // slight delay to allow for visual reset
+        }, 150);
       }
     }
   }, [game?.id, game?.color, game?.status]);
