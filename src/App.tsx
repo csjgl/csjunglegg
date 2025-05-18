@@ -126,7 +126,7 @@ const AppNavbar = ({ setShowLoginModal }: { setShowLoginModal: (show: boolean) =
       <div className="mx-auto px-4 py-4 flex justify-between items-center">
         {/* Logo */}
         <div className="flex items-center space-x-4">
-          <img src="/CSJungleLOGO.png" alt="Logo" className="h-10 w-10" />
+          <img src="/CSJungleLOGO.png" alt="Logo" className="h-48 w-48" />
         </div>
         {/* Menu */}
         <nav className="flex items-center space-x-6">
