@@ -2,30 +2,11 @@ import { supabase } from '../src/supabaseClient';
 
 export default async function handler(req, res) {
   try {
-    // Add debugging logs to verify logout process
-    console.log('Attempting to log out user...');
-
-    // Log out from Supabase
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Error logging out from Supabase:', error);
-    } else {
-      console.log('Supabase session cleared successfully.');
-    }
-
-    // Ensure session-related operations are stopped
-    isUserLoggedOut = true;
-    console.log('User logged out. Session-related operations stopped.');
-
-    // Clear the token cookie
+    // Clear the token cookie (for all paths)
     res.setHeader('Set-Cookie', 'token=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0');
-    console.log('Token cookie cleared. Redirecting to home page...');
-
-    // Redirect to home page
-    res.writeHead(302, { Location: '/' });
-    res.end();
+    res.statusCode = 200;
+    res.end(JSON.stringify({ success: true }));
   } catch (err) {
-    console.error('Unexpected error during logout:', err);
     res.statusCode = 500;
     res.end('Internal Server Error');
   }

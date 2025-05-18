@@ -3,6 +3,12 @@ import axios from 'axios';
 import { gsap } from 'gsap';
 import Ably from 'ably';
 
+interface ProvablyFairSeed {
+  serverseedhash: string;
+  revealedat?: string;
+  serverseed?: string;
+}
+
 interface RouletteGameData {
   id: string;
   starttime: string;
@@ -11,6 +17,9 @@ interface RouletteGameData {
   bettingwindowend?: string;
   color?: string;
   number?: number;
+  provablyfairseed?: ProvablyFairSeed;
+  clientseed?: string;
+  nonce?: number;
 }
 
 const RouletteGame: React.FC = () => {
@@ -72,22 +81,24 @@ const RouletteGame: React.FC = () => {
       const resultIndex = (colorOrder.length * (TAPE_REPEAT - 2)) + colorOrder.lastIndexOf(game.color);
       const targetOffset = -(resultIndex * SEGMENT_WIDTH) + (Math.floor(TAPE_LENGTH / 2) * SEGMENT_WIDTH);
       if (tapeRef.current) {
-        // Reset tape to start position instantly
-        gsap.set(tapeRef.current, { x: 0 });
-        // Animate tape to target offset
-        gsap.to(tapeRef.current, {
-          x: targetOffset,
-          duration: 2.5,
-          ease: 'power4.out',
-          onComplete: () => {
-            setTapeAnimating(false);
-            setTapeResult(game.color!);
-          }
-        });
+        // Only animate if not already at start
+        gsap.to(tapeRef.current, { x: 0, duration: 0 });
+        // Animate tape to target offset after a short delay for visual effect
+        setTimeout(() => {
+          gsap.to(tapeRef.current, {
+            x: targetOffset,
+            duration: 2.5,
+            ease: 'power4.out',
+            onComplete: () => {
+              setTapeAnimating(false);
+              setTapeResult(game.color!);
+            }
+          });
+        }, 150); // slight delay to allow for visual reset
       }
     } else if (game?.status === 'pending') {
       if (tapeRef.current) {
-        gsap.set(tapeRef.current, { x: 0 });
+        gsap.to(tapeRef.current, { x: 0, duration: 0.2, ease: 'power2.inOut' });
       }
       setTapeResult(null);
       setTapeAnimating(false);
@@ -188,7 +199,7 @@ const RouletteGame: React.FC = () => {
                   {color === 'green' ? '0' : ''}
                 </div>
               ))
-            )}
+            }
           </div>
           {/* Center pointer */}
           <div className="absolute top-0 left-1/2 h-16 w-0.5 bg-yellow-400" style={{ transform: 'translateX(-50%)' }} />
@@ -197,6 +208,24 @@ const RouletteGame: React.FC = () => {
         {tapeAnimating && <div className="text-lg font-bold animate-pulse">Spinning...</div>}
         {tapeResult && <div className="text-lg font-bold">Result: <span className={tapeResult === 'green' ? 'text-green-600' : tapeResult === 'red' ? 'text-red-600' : 'text-black'}>{tapeResult}</span></div>}
       </div>
+      {/* Provably Fair Info */}
+      {game?.provablyfairseed && (
+        <div className="mt-4 p-2 bg-gray-100 rounded text-xs">
+          <div><b>Provably Fair</b></div>
+          <div>Server Seed Hash: <span className="font-mono">{game.provablyfairseed.serverseedhash}</span></div>
+          {game.provablyfairseed.revealedat && (
+            <>
+              <div>Server Seed: <span className="font-mono">{game.provablyfairseed.serverseed}</span></div>
+              <div className="text-green-700">(Revealed)</div>
+            </>
+          )}
+          {!game.provablyfairseed.revealedat && (
+            <div className="text-gray-500">(Will be revealed after N rounds)</div>
+          )}
+          <div>Client Seed: <span className="font-mono">{game.clientseed}</span></div>
+          <div>Nonce: <span className="font-mono">{game.nonce}</span></div>
+        </div>
+      )}
       {/* TODO: Add bet history, etc. */}
     </div>
   );
