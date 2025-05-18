@@ -49,10 +49,10 @@ export default async function handler(req, res) {
   if (game) {
     const { data: bets } = await supabase.from('crashbet').select('*').eq('gameid', game.id);
     game.bets = bets || [];
-    // Ensure bettingWindowEnd is included (should be by default, but force it for safety)
-    if (!('bettingWindowEnd' in game) || typeof game.bettingWindowEnd === 'undefined') {
-      const { data: dbGame } = await supabase.from('crashgame').select('bettingWindowEnd').eq('id', game.id).single();
-      game.bettingWindowEnd = dbGame ? dbGame.bettingWindowEnd : null;
+    // Ensure bettingwindowend is included (should be by default, but force it for safety)
+    if (!('bettingwindowend' in game) || typeof game.bettingwindowend === 'undefined') {
+      const { data: dbGame } = await supabase.from('crashgame').select('bettingwindowend').eq('id', game.id).single();
+      game.bettingwindowend = dbGame ? dbGame.bettingwindowend : null;
     }
   } else {
     // If no game found, return a default paused game object to prevent frontend lockup
@@ -64,7 +64,7 @@ export default async function handler(req, res) {
       seed: '',
       status: 'paused',
       bets: [],
-      bettingWindowEnd: null
+      bettingwindowend: null
     };
   }
 

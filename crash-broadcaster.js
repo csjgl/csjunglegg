@@ -31,7 +31,7 @@ function randomCrashPoint() {
   return Math.floor((1 / (1 - X)) * 100) / 100;
 }
 
-async function createGame(seed, crashpoint, starttime, bettingWindowEnd) {
+async function createGame(seed, crashpoint, starttime, bettingwindowend) {
   const { data, error } = await supabase
     .from('crashgame')
     .insert({
@@ -39,7 +39,7 @@ async function createGame(seed, crashpoint, starttime, bettingWindowEnd) {
       seed,
       status: 'pending',
       crashpoint,
-      bettingWindowEnd
+      bettingwindowend
     })
     .select()
     .single();
@@ -75,9 +75,9 @@ async function runCrashLoop() {
     // Set starttime to the exact moment the event is published
     const now = Date.now();
     const starttime = new Date(now).toISOString();
-    const bettingWindowEnd = new Date(now + BETTING_WINDOW_MS).toISOString();
-    let game = await createGame(seed, crashpoint, starttime, bettingWindowEnd);
-    console.log('[BROADCASTER] Created pending game:', game.id, 'starttime:', starttime, 'bettingWindowEnd:', bettingWindowEnd, 'now:', new Date().toISOString());
+    const bettingwindowend = new Date(now + BETTING_WINDOW_MS).toISOString();
+    let game = await createGame(seed, crashpoint, starttime, bettingwindowend);
+    console.log('[BROADCASTER] Created pending game:', game.id, 'starttime:', starttime, 'bettingwindowend:', bettingwindowend, 'now:', new Date().toISOString());
     ablyChannel.publish('pending', { gameId: game.id });
     console.log('[BROADCASTER] Published pending event for game:', game.id, 'at', new Date().toISOString());
     await new Promise(r => setTimeout(r, BETTING_WINDOW_MS));
