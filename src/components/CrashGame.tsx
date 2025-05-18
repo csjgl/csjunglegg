@@ -104,7 +104,7 @@ const CrashGame: React.FC = () => {
 
   useEffect(() => {
     if (!game || game.status !== 'pending') {
-      setCountdown(0); // Always set to 0, not null, so UI logic works
+      setCountdown(0);
       return;
     }
     // Use bettingwindowend if available, otherwise fallback to 15s
@@ -121,10 +121,16 @@ const CrashGame: React.FC = () => {
     }
     function getSecondsLeft() {
       const now = Date.now();
-      let left = Math.ceil((end! - now) / 1000);
-      return left > 0 ? left : 0;
+      if (end === null) return 0;
+      let left = Math.max(0, Math.ceil((end - now) / 1000));
+      return left;
     }
-    setCountdown(getSecondsLeft());
+    // If this is a new pending game, force countdown to 15
+    if (getSecondsLeft() > 14) {
+      setCountdown(15);
+    } else {
+      setCountdown(getSecondsLeft());
+    }
     const interval = setInterval(() => {
       setCountdown(getSecondsLeft());
     }, 1000);
