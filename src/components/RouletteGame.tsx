@@ -55,6 +55,32 @@ const RouletteGame: React.FC = () => {
     }
   }, [game?.status, game?.color]);
 
+  // Wheel animation state
+  const [wheelAngle, setWheelAngle] = useState(0);
+  const [spinning, setSpinning] = useState(false);
+  const [spinResult, setSpinResult] = useState<string | null>(null);
+
+  // Animate the wheel when spinning
+  useEffect(() => {
+    if (game?.status === 'spinning' && game.color) {
+      setSpinning(true);
+      // Pick a random angle for the result color
+      const colorIndex = ['red','black','red','black','red','black','red','black','red','black','green'].indexOf(game.color);
+      const angle = 360 * 5 + (colorIndex * (360 / 11)); // 5 full spins + result
+      setTimeout(() => {
+        setWheelAngle(angle);
+        setTimeout(() => {
+          setSpinning(false);
+          setSpinResult(game.color!);
+        }, 2000);
+      }, 200); // slight delay for effect
+    } else if (game?.status === 'pending') {
+      setWheelAngle(0);
+      setSpinResult(null);
+      setSpinning(false);
+    }
+  }, [game?.status, game?.color]);
+
   const handleBet = async () => {
     if (!betAmount) return;
     await axios.post('/api/roulette/bet', { gameId: game?.id, color: betColor, amount: Number(betAmount) });
@@ -88,7 +114,36 @@ const RouletteGame: React.FC = () => {
           <span key={g.id || i} className={`w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center text-xs font-bold ${g.color === 'green' ? 'bg-green-500 text-white' : g.color === 'red' ? 'bg-red-500 text-white' : 'bg-black text-white'}`}>{g.color?.charAt(0).toUpperCase()}</span>
         ))}
       </div>
-      {/* TODO: Add wheel animation, bet history, etc. */}
+      {/* Wheel animation */}
+      <div className="flex flex-col items-center mb-4">
+        <div className="relative w-32 h-32 mb-2">
+          <div
+            className="absolute w-full h-full rounded-full border-4 border-gray-300"
+            style={{
+              transition: spinning ? 'transform 2s cubic-bezier(0.23, 1, 0.32, 1)' : 'none',
+              transform: `rotate(${wheelAngle}deg)`
+            }}
+          >
+            {/* Render 11 segments for the wheel */}
+            {['red','black','red','black','red','black','red','black','red','black','green'].map((color, i) => (
+              <div
+                key={i}
+                className={`absolute left-1/2 top-1/2 w-1/2 h-1/2 origin-bottom rotate-${i * (360/11)}`}
+                style={{
+                  background: color,
+                  clipPath: 'polygon(0% 0%, 100% 0%, 50% 100%)',
+                  transform: `rotate(${i * (360/11)}deg) translate(-50%, -100%)`
+                }}
+              />
+            ))}
+          </div>
+          {/* Pointer */}
+          <div className="absolute left-1/2 top-0 w-0 h-0 border-l-8 border-r-8 border-b-12 border-l-transparent border-r-transparent border-b-yellow-400" style={{transform: 'translateX(-50%)'}} />
+        </div>
+        {spinning && <div className="text-lg font-bold animate-pulse">Spinning...</div>}
+        {spinResult && <div className="text-lg font-bold">Result: <span className={spinResult === 'green' ? 'text-green-600' : spinResult === 'red' ? 'text-red-600' : 'text-black'}>{spinResult}</span></div>}
+      </div>
+      {/* TODO: Add bet history, etc. */}
     </div>
   );
 };
