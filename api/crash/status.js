@@ -65,11 +65,14 @@ export default async function handler(req, res) {
     const { data: bets } = await supabase.from('crashbet').select('*').eq('gameid', game.id);
     game.bets = bets || [];
     // Ensure bettingWindowEnd is included (should be by default, but force it for safety)
-    if (!('bettingWindowEnd' in game)) {
+    if (!('bettingWindowEnd' in game) || typeof game.bettingWindowEnd === 'undefined') {
       const { data: dbGame } = await supabase.from('crashgame').select('bettingWindowEnd').eq('id', game.id).single();
-      if (dbGame && dbGame.bettingWindowEnd) game.bettingWindowEnd = dbGame.bettingWindowEnd;
+      game.bettingWindowEnd = dbGame ? dbGame.bettingWindowEnd : null;
     }
   }
+
+  // Debug: log the returned game object
+  console.log('[DEBUG] /api/crash/status.js returning game:', game);
 
   res.status(200).json({ game });
 }
