@@ -71,7 +71,7 @@ const RouletteGame: React.FC = () => {
   const tapeRef = React.useRef<HTMLDivElement>(null);
   const colorOrder = ['red','black','red','black','red','black','red','black','red','black','green'];
   const TAPE_REPEAT = 8; // How many times to repeat the color sequence for a long tape
-  const SEGMENT_WIDTH = 40; // px, width of each color segment
+  const SEGMENT_WIDTH = 60; // px, width of each color segment
   const TAPE_LENGTH = colorOrder.length * TAPE_REPEAT;
 
   // Animate the tape when a new result is available (spinning or finished)
@@ -84,7 +84,9 @@ const RouletteGame: React.FC = () => {
       setLastAnimatedGameId(game.id);
       // Find the index of the result in the last repeat (so it lands under the pointer)
       const resultIndex = (colorOrder.length * (TAPE_REPEAT - 2)) + colorOrder.lastIndexOf(game.color);
-      const targetOffset = -(resultIndex * SEGMENT_WIDTH) + (Math.floor(TAPE_LENGTH / 2) * SEGMENT_WIDTH);
+      // Add a random offset within the segment for 'bait' effect
+      const randomOffset = Math.floor(Math.random() * (SEGMENT_WIDTH - 16)) + 8; // avoid extreme edges
+      const targetOffset = -((resultIndex * SEGMENT_WIDTH) + randomOffset) + (Math.floor(TAPE_LENGTH / 2) * SEGMENT_WIDTH);
       if (tapeRef.current) {
         // Reset tape to center before animating
         gsap.to(tapeRef.current, { x: 0, duration: 0 });
@@ -92,7 +94,7 @@ const RouletteGame: React.FC = () => {
           gsap.to(tapeRef.current, {
             x: targetOffset,
             duration: 2.5,
-            ease: 'expo.out', // strong easing for realism
+            ease: 'expo.out',
             onComplete: () => {
               setTapeAnimating(false);
               setTapeResult(game.color!);
