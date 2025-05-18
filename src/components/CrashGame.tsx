@@ -44,25 +44,29 @@ const CrashGame: React.FC = () => {
   // Ably real-time integration
   useEffect(() => {
     if (!import.meta.env.VITE_ABLY_PUBLIC_KEY) return;
-    const ably = new Ably.Realtime(import.meta.env.VITE_ABLY_PUBLIC_KEY);
+    // Force Ably to use WebSockets for lowest latency
+    const ably = new Ably.Realtime({
+      key: import.meta.env.VITE_ABLY_PUBLIC_KEY,
+      transports: ['web_socket'],
+    });
     ably.connection.on((stateChange) => {
       console.log('[DEBUG] Ably connection state:', stateChange.current);
     });
     const channel = ably.channels.get('crashgame');
 
     // Listen for multiplier updates
-    channel.subscribe('multiplier', (msg: any) => {
+    channel.subscribe('multiplier', (msg) => {
       setMultiplier(msg.data.multiplier);
       setDisplayedMultiplier(msg.data.multiplier);
     });
     // Listen for crash event
-    channel.subscribe('crash', (msg: any) => {
+    channel.subscribe('crash', (msg) => {
       setMultiplier(msg.data.crashpoint);
       setDisplayedMultiplier(msg.data.crashpoint);
       setShowCrashEffect(true);
       setTimeout(() => {
         setShowCrashEffect(false);
-        setDisplayedMultiplier(1.0); // Reset display to 1.00x after crash effect
+        setDisplayedMultiplier(1.0);
       }, 1200);
     });
     // Listen for paused event
@@ -213,15 +217,22 @@ const CrashGame: React.FC = () => {
 
   // Fallback polling: If not in pending, poll every second for a new pending game
   useEffect(() => {
+    let stopped = false;
     if (!game || game.status !== 'pending') {
       const interval = setInterval(() => {
+        if (stopped) return;
         axios.get('/api/crash/status').then(res => {
           if (res.data.game && res.data.game.status === 'pending') {
             setGame(res.data.game);
+            stopped = true; // Stop polling if we get a pending game
+            clearInterval(interval);
           }
         });
       }, 1000);
-      return () => clearInterval(interval);
+      return () => {
+        stopped = true;
+        clearInterval(interval);
+      };
     }
   }, [game]);
 
