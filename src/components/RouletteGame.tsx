@@ -82,24 +82,21 @@ const RouletteGame: React.FC = () => {
     if ((game.status === 'spinning' || game.status === 'finished') && game.color) {
       setTapeAnimating(true);
       setLastAnimatedGameId(game.id);
-      // Ticket system: 0-999, each color gets a range
-      const TICKETS_PER_SEGMENT = Math.floor(1000 / colorOrder.length);
+      // Robust ticket system: assign each segment a ticket range
+      const SEGMENTS = colorOrder.length;
       const colorIndex = colorOrder.lastIndexOf(game.color!);
-      const colorStartTicket = colorIndex * TICKETS_PER_SEGMENT;
-      const colorEndTicket = colorStartTicket + TICKETS_PER_SEGMENT - 1;
-      // Pick a random ticket within the result color's range
-      const ticket = Math.floor(Math.random() * (colorEndTicket - colorStartTicket + 1)) + colorStartTicket;
-      // Map ticket to pixel offset within the segment
-      // Each segment is SEGMENT_WIDTH px, so find the offset within the segment
-      const ticketInSegment = ticket - colorStartTicket;
-      const pxPerTicket = SEGMENT_WIDTH / TICKETS_PER_SEGMENT;
-      // Pick a random offset within the segment for bait effect
-      const minOffset = 8, maxOffset = SEGMENT_WIDTH - 8;
-      const offsetWithinSegment = Math.floor(Math.random() * (maxOffset - minOffset + 1)) + minOffset;
-      // Find the index of the result in the last repeat (so it lands under the pointer)
-      const resultIndex = (colorOrder.length * (TAPE_REPEAT - 2)) + colorIndex;
-      // The pointer should land inside the result segment in the last repeat
-      const targetOffset = -((resultIndex * SEGMENT_WIDTH) + offsetWithinSegment) + (Math.floor(TAPE_LENGTH / 2) * SEGMENT_WIDTH);
+      // Pick a random ticket within the result color's segment
+      const ticketInSegment = Math.floor(Math.random() * 1000);
+      // Find the index of the result segment in the last repeat
+      const resultSegmentIndex = (SEGMENTS * (TAPE_REPEAT - 2)) + colorIndex;
+      // The left edge of the result segment in px
+      const segmentLeftPx = resultSegmentIndex * SEGMENT_WIDTH;
+      // Offset within the segment in px
+      const offsetWithinSegment = (ticketInSegment / 1000) * SEGMENT_WIDTH;
+      // The pointer should land at segmentLeftPx + offsetWithinSegment
+      const pointerPx = segmentLeftPx + offsetWithinSegment;
+      // Center the pointer in the visible tape
+      const targetOffset = -pointerPx + (Math.floor(TAPE_LENGTH / 2) * SEGMENT_WIDTH);
       if (tapeRef.current) {
         gsap.to(tapeRef.current, { x: 0, duration: 0 });
         setTimeout(() => {
@@ -222,7 +219,7 @@ const RouletteGame: React.FC = () => {
                 >
                 </div>
               ))
-            )}
+            }
           </div>
           {/* Center pointer */}
           <div className="absolute top-0 left-1/2 h-16 w-0.5 bg-yellow-400" style={{ transform: 'translateX(-50%)' }} />
